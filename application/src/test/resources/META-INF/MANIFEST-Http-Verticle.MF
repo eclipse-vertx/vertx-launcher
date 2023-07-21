@@ -1,0 +1,2 @@
+Main-Class: io.vertx.core.application.VertxApplication
+Main-Verticle: io.vertx.application.HttpTestVerticle

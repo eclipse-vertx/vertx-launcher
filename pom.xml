@@ -55,6 +55,7 @@
 
   <modules>
     <module>cli</module>
+    <module>application</module>
   </modules>
 
   <build>
