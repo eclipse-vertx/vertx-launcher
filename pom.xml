@@ -24,7 +24,7 @@
   <version>5.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>Vertx SQL Client parent</name>
+  <name>Vert.x Launcher parent</name>
   <url>https://github.com/eclipse-vertx/vertx-launcher</url>
   <description>The Vert.x Launcher parent</description>
 
