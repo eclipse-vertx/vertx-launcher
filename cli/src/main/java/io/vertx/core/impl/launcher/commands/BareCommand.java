@@ -11,10 +11,7 @@
 
 package io.vertx.core.impl.launcher.commands;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxException;
-import io.vertx.core.VertxOptions;
+import io.vertx.core.*;
 import io.vertx.core.cli.annotations.*;
 import io.vertx.core.eventbus.AddressHelper;
 import io.vertx.core.eventbus.EventBusOptions;
@@ -23,18 +20,22 @@ import io.vertx.core.impl.launcher.VertxLifecycleHooks;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.core.spi.VertxMetricsFactory;
+import io.vertx.core.spi.VertxServiceProvider;
+import io.vertx.core.spi.VertxTracerFactory;
 import io.vertx.core.spi.launcher.ExecutionContext;
+import io.vertx.core.tracing.TracingOptions;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Method;
-import java.util.Enumeration;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Command to create a <em>bare</em> instance of vert.x.
@@ -210,9 +211,33 @@ public class BareCommand extends ClasspathHandler {
       eventBusOptions = getEventBusOptions(optionsJson.getJsonObject("eventBusOptions"));
       builder = new VertxBuilder(optionsJson);
     }
-    builder.metricsOptionsProcessor(metricsOptions -> configureFromSystemProperties(metricsOptions, METRICS_OPTIONS_PROP_PREFIX));
     options = builder.options();
     options.setEventBusOptions(eventBusOptions);
+
+    VertxMetricsFactory metricsFactory = findServiceProvider(VertxMetricsFactory.class);
+    if (metricsFactory != null) {
+      MetricsOptions metricsOptions;
+      if (optionsJson != null && optionsJson.containsKey("metricsOptions")) {
+        metricsOptions = metricsFactory.newOptions(optionsJson.getJsonObject("metricsOptions"));
+      } else {
+        metricsOptions = options.getMetricsOptions();
+        if (metricsOptions == null) {
+          metricsOptions = metricsFactory.newOptions();
+        } else {
+          metricsOptions = metricsFactory.newOptions(metricsOptions);
+        }
+      }
+      configureFromSystemProperties(metricsOptions, METRICS_OPTIONS_PROP_PREFIX);
+      options.setMetricsOptions(metricsOptions);
+    }
+
+    VertxTracerFactory tracerFactory = findServiceProvider(VertxTracerFactory.class);
+    if (tracerFactory != null) {
+      if (optionsJson != null && optionsJson.containsKey("tracingOptions")) {
+        TracingOptions tracingOptions = tracerFactory.newOptions(optionsJson.getJsonObject("tracingOptions"));
+        options.setTracingOptions(tracingOptions);
+      }
+    }
 
     beforeStartingVertx(options);
 
@@ -287,6 +312,21 @@ public class BareCommand extends ClasspathHandler {
     addShutdownHook(instance, log, finalAction);
     afterStartingVertx(instance);
     return instance;
+  }
+
+  private <SP> SP findServiceProvider(Class<SP> serviceProviderClass) {
+    List<SP> serviceProviders = ServiceHelper.loadFactories(VertxServiceProvider.class).stream()
+      .filter(vertxServiceProvider -> serviceProviderClass.isAssignableFrom(vertxServiceProvider.getClass()))
+      .map(serviceProviderClass::cast)
+      .collect(toList());
+    if (serviceProviders.size() == 0) {
+      return null;
+    }
+    if (serviceProviders.size() != 1) {
+      log.warn("Cannot convert options, there are several implementations of " + serviceProviderClass);
+      return null;
+    }
+    return serviceProviders.get(0);
   }
 
   protected JsonObject getJsonFromFileOrString(String jsonFileOrString, String argName) {
