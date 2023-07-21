@@ -20,11 +20,17 @@ import io.vertx.core.impl.VertxBuilder;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.core.spi.VertxMetricsFactory;
+import io.vertx.core.spi.VertxServiceProvider;
+import io.vertx.core.spi.VertxTracerFactory;
+import io.vertx.core.tracing.TracingOptions;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -32,6 +38,7 @@ import java.util.function.Supplier;
 
 import static io.vertx.core.application.impl.Utils.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.stream.Collectors.toList;
 import static picocli.CommandLine.Parameters.NULL_VALUE;
 
 @Command(name = "VertxApplication", description = "Runs a Vert.x application.", sortOptions = false)
@@ -176,7 +183,7 @@ public class VertxApplicationCommand implements Runnable {
     JsonObject optionsJson = readJsonFileOrString(log, "options", vertxOptionsStr);
     VertxBuilder builder = optionsJson != null ? new VertxBuilder(optionsJson) : new VertxBuilder();
 
-    processVertxOptions(builder.options());
+    processVertxOptions(builder.options(), optionsJson);
 
     hookContext.setVertxOptions(builder.options());
     hooks.beforeStartingVertx(hookContext);
@@ -213,7 +220,7 @@ public class VertxApplicationCommand implements Runnable {
     hooks.afterVerticleDeployed(hookContext);
   }
 
-  private void processVertxOptions(VertxOptions vertxOptions) {
+  private void processVertxOptions(VertxOptions vertxOptions, JsonObject optionsJson) {
     if (clustered == Boolean.TRUE) {
       EventBusOptions eventBusOptions = vertxOptions.getEventBusOptions();
       if (clusterHost != null) {
@@ -231,9 +238,44 @@ public class VertxApplicationCommand implements Runnable {
       configureFromSystemProperties(log, eventBusOptions, VERTX_EVENTBUS_PROP_PREFIX);
     }
     configureFromSystemProperties(log, vertxOptions, VERTX_OPTIONS_PROP_PREFIX);
-    if (vertxOptions.getMetricsOptions() != null) {
-      configureFromSystemProperties(log, vertxOptions.getMetricsOptions(), METRICS_OPTIONS_PROP_PREFIX);
+    VertxMetricsFactory metricsFactory = findServiceProvider(VertxMetricsFactory.class);
+    if (metricsFactory != null) {
+      MetricsOptions metricsOptions;
+      if (optionsJson != null && optionsJson.containsKey("metricsOptions")) {
+        metricsOptions = metricsFactory.newOptions(optionsJson.getJsonObject("metricsOptions"));
+      } else {
+        metricsOptions = vertxOptions.getMetricsOptions();
+        if (metricsOptions == null) {
+          metricsOptions = metricsFactory.newOptions();
+        } else {
+          metricsOptions = metricsFactory.newOptions(metricsOptions);
+        }
+      }
+      configureFromSystemProperties(log, metricsOptions, METRICS_OPTIONS_PROP_PREFIX);
+      vertxOptions.setMetricsOptions(metricsOptions);
     }
+    VertxTracerFactory tracerFactory = findServiceProvider(VertxTracerFactory.class);
+    if (tracerFactory != null) {
+      if (optionsJson != null && optionsJson.containsKey("tracingOptions")) {
+        TracingOptions tracingOptions = tracerFactory.newOptions(optionsJson.getJsonObject("tracingOptions"));
+        vertxOptions.setTracingOptions(tracingOptions);
+      }
+    }
+  }
+
+  private <SP> SP findServiceProvider(Class<SP> serviceProviderClass) {
+    List<SP> serviceProviders = ServiceHelper.loadFactories(VertxServiceProvider.class).stream()
+      .filter(vertxServiceProvider -> serviceProviderClass.isAssignableFrom(vertxServiceProvider.getClass()))
+      .map(serviceProviderClass::cast)
+      .collect(toList());
+    if (serviceProviders.size() == 0) {
+      return null;
+    }
+    if (serviceProviders.size() != 1) {
+      log.warn("Cannot convert options, there are several implementations of " + serviceProviderClass);
+      return null;
+    }
+    return serviceProviders.get(0);
   }
 
   private DeploymentOptions createDeploymentOptions() {
