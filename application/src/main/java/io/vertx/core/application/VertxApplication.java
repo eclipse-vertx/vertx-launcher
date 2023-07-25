@@ -31,73 +31,80 @@ public class VertxApplication {
 
   private static final Logger log = LoggerFactory.getLogger(VertxApplication.class);
 
+  private final String[] args;
+  private final VertxApplicationHooks hooks;
+  private final boolean printUsageOnFailure;
+  private final boolean exitOnFailure;
+
   public static void main(String[] args) {
-    VertxApplication vertxApplication = new VertxApplication();
-    int exitCode = vertxApplication.launch(args);
-    vertxApplication.processExitCode(exitCode);
+    VertxApplication vertxApplication = new VertxApplication(args);
+    vertxApplication.launch();
   }
 
   /**
-   * Launches the Vert.x application.
+   * Create a new instance with the given program arguments and default behavior (print usage and exit on failure).
    * <p>
    * Subclasses may implement {@link VertxApplicationHooks}.
    * In this case, this object's hook methods will be invoked at different stages of the launch process.
    *
-   * @param args the application arguments, usually provided on the command line
-   * @return an exit code, {@code 0} means the verticle has been deployed successfully
+   * @param args the program arguments
    */
-  public int launch(String[] args) {
-    VertxApplicationHooks hooks;
+  public VertxApplication(String[] args) {
+    this.args = Objects.requireNonNull(args);
     if (this instanceof VertxApplicationHooks) {
       hooks = (VertxApplicationHooks) this;
     } else {
       hooks = new VertxApplicationHooks() {
       };
     }
-    return launch(args, hooks);
+    printUsageOnFailure = true;
+    exitOnFailure = true;
   }
 
   /**
-   * Launches the Vert.x application.
+   * Like {@link #VertxApplication(String[])}, with the provided {@code hooks}.
    *
-   * @param args  the application arguments, usually provided on the command line
+   * @param args  the program arguments
    * @param hooks an instance of {@link VertxApplicationHooks} to be invoked at different stages of the launch process
-   * @return an exit code, {@code 0} means the verticle has been deployed successfully
    */
-  public int launch(String[] args, VertxApplicationHooks hooks) {
-    return launch(args, hooks, true);
+  public VertxApplication(String[] args, VertxApplicationHooks hooks) {
+    this(args, hooks, true, true);
+  }
+
+  /**
+   * May be invoked by subclasses to customize behavior.
+   *
+   * @param args                the program arguments
+   * @param hooks               an instance of {@link VertxApplicationHooks} to be invoked at different stages of the launch process
+   * @param printUsageOnFailure whether usage should be printed to {@link System#out} if the application failed to start
+   * @param exitOnFailure       whether the JVM should be terminated with a specific {@code exitCode} if the application failed to start
+   */
+  protected VertxApplication(String[] args, VertxApplicationHooks hooks, boolean printUsageOnFailure, boolean exitOnFailure) {
+    this.args = Objects.requireNonNull(args);
+    this.hooks = Objects.requireNonNull(hooks);
+    this.printUsageOnFailure = printUsageOnFailure;
+    this.exitOnFailure = exitOnFailure;
   }
 
   /**
    * Launches the Vert.x application.
    *
-   * @param args                the application arguments, usually provided on the command line
-   * @param hooks               an instance of {@link VertxApplicationHooks} to be invoked at different stages of the launch process
-   * @param printUsageOnFailure whether usage should be printed to {@link System#out} if the returned value is not zero
    * @return an exit code, {@code 0} means the verticle has been deployed successfully
    */
-  public int launch(String[] args, VertxApplicationHooks hooks, boolean printUsageOnFailure) {
+  public int launch() {
     VertxApplicationCommand command = new VertxApplicationCommand(this, Objects.requireNonNull(hooks), log);
     CommandLine commandLine = new CommandLine(command)
       .setOptionsCaseInsensitive(true)
       .setExitCodeExceptionMapper(CommandException.EXIT_CODE_EXCEPTION_MAPPER);
     int exitCode = commandLine.execute(args);
-    if (exitCode != 0 && printUsageOnFailure) { // Don't print usage if the verticle has been deployed
-      CommandLine.usage(command, System.out, Ansi.ON);
+    if (exitCode != 0) {
+      if (printUsageOnFailure) {
+        CommandLine.usage(command, System.out, Ansi.ON);
+      }
+      if (exitOnFailure) {
+        System.exit(exitCode);
+      }
     }
     return exitCode;
-  }
-
-  /**
-   * Processes the exit code returned by {@link #launch(String[], VertxApplicationHooks, boolean)}.
-   * <p>
-   * Terminates the current JVM with the {@code exitCode} value if it is different from zero.
-   *
-   * @param exitCode the exit code value
-   */
-  public void processExitCode(int exitCode) {
-    if (exitCode != 0) { // Don't exit if the verticle has been deployed
-      System.exit(exitCode);
-    }
   }
 }

@@ -14,6 +14,7 @@ package io.vertx.application;
 import io.vertx.core.Verticle;
 import io.vertx.core.application.HookContext;
 import io.vertx.core.application.VertxApplication;
+import io.vertx.core.application.VertxApplicationHooks;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.impl.DummyVertxMetrics;
@@ -24,14 +25,15 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.function.Supplier;
 
-import static io.vertx.application.VertxApplicationTest.*;
+import static io.vertx.application.VertxApplicationTest.assertServerStarted;
+import static io.vertx.application.VertxApplicationTest.getContent;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class VertxApplicationExtensibilityTest {
 
-  private MyHooks hooks;
+  private TestHooks hooks;
 
   @AfterEach
   public void tearDown() {
@@ -43,22 +45,21 @@ public class VertxApplicationExtensibilityTest {
 
   @Test
   public void testExtendingMainVerticle() {
-    VertxApplication myVertxApplication = new VertxApplication();
-    hooks = new MyHooks() {
+    hooks = new TestHooks() {
       @Override
       public Supplier<Verticle> verticleSupplier() {
         return () -> new HttpTestVerticle();
       }
     };
-    myVertxApplication.launch(new String[0], hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[0], hooks);
+    app.launch();
     assertServerStarted();
   }
 
   @Test
   public void testThatCustomLauncherCanUpdateConfigurationWhenNoneArePassed() throws IOException {
     long time = System.nanoTime();
-    VertxApplication myVertxApplication = new VertxApplication();
-    hooks = new MyHooks() {
+    hooks = new TestHooks() {
       @Override
       public Supplier<Verticle> verticleSupplier() {
         return () -> new HttpTestVerticle();
@@ -69,7 +70,8 @@ public class VertxApplicationExtensibilityTest {
         context.deploymentOptions().setConfig(new JsonObject().put("time", time));
       }
     };
-    myVertxApplication.launch(new String[0], hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[0], hooks);
+    app.launch();
     assertServerStarted();
     assertEquals(time, getContent().getJsonObject("conf").getLong("time"));
   }
@@ -77,8 +79,7 @@ public class VertxApplicationExtensibilityTest {
   @Test
   public void testThatCustomLauncherCanUpdateConfiguration() throws IOException {
     long time = System.nanoTime();
-    VertxApplication myVertxApplication = new VertxApplication();
-    hooks = new MyHooks() {
+    hooks = new TestHooks() {
       @Override
       public Supplier<Verticle> verticleSupplier() {
         return () -> new HttpTestVerticle();
@@ -89,15 +90,15 @@ public class VertxApplicationExtensibilityTest {
         context.deploymentOptions().getConfig().put("time", time);
       }
     };
-    myVertxApplication.launch(new String[]{"-conf={\"time\":345667}"}, hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[]{"-conf={\"time\":345667}"}, hooks);
+    app.launch();
     assertServerStarted();
     assertEquals(time, getContent().getJsonObject("conf").getLong("time"));
   }
 
   @Test
   public void testThatCustomLauncherCanCustomizeMetricsOption() throws Exception {
-    VertxApplication myVertxApplication = new VertxApplication();
-    hooks = new MyHooks() {
+    hooks = new TestHooks() {
       @Override
       public Supplier<Verticle> verticleSupplier() {
         return () -> new HttpTestVerticle();
@@ -110,7 +111,8 @@ public class VertxApplicationExtensibilityTest {
           .setFactory(options -> DummyVertxMetrics.INSTANCE);
       }
     };
-    myVertxApplication.launch(new String[0], hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[0], hooks);
+    app.launch();
     assertServerStarted();
     assertEquals(TRUE, getContent().getBoolean("metrics"));
   }
@@ -118,8 +120,7 @@ public class VertxApplicationExtensibilityTest {
   @Test
   public void testThatCustomLauncherCanCustomizeClusterManager() throws Exception {
     FakeClusterManager clusterManager = new FakeClusterManager();
-    VertxApplication myVertxApplication = new VertxApplication();
-    hooks = new MyHooks() {
+    hooks = new TestHooks() {
       @Override
       public Supplier<Verticle> verticleSupplier() {
         return () -> new HttpTestVerticle();
@@ -130,9 +131,17 @@ public class VertxApplicationExtensibilityTest {
         context.vertxOptions().setClusterManager(clusterManager);
       }
     };
-    myVertxApplication.launch(new String[]{"-cluster"}, hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[]{"-cluster"}, hooks);
+    app.launch();
     assertServerStarted();
     assertEquals(TRUE, getContent().getBoolean("clustered"));
     assertSame(clusterManager, ((VertxInternal) hooks.vertx).getClusterManager());
+  }
+
+  private static class TestVertxApplication extends VertxApplication {
+
+    public TestVertxApplication(String[] args, VertxApplicationHooks hooks) {
+      super(args, hooks, false, false);
+    }
   }
 }

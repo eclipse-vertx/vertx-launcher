@@ -12,10 +12,8 @@
 package io.vertx.application;
 
 import io.vertx.core.CustomMetricsOptions;
-import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.application.HookContext;
-import io.vertx.core.application.VertxApplication;
 import io.vertx.core.application.VertxApplicationHooks;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
@@ -53,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class VertxApplicationTest {
 
-  private MyHooks hooks = new MyHooks();
+  private TestHooks hooks = new TestHooks();
   private Path manifest;
   private ByteArrayOutputStream out;
   private ByteArrayOutputStream err;
@@ -90,15 +88,15 @@ public class VertxApplicationTest {
 
   @Test
   public void testDeploymentOfJavaVerticle() {
-    VertxApplication myVertxApplication = new VertxApplication();
-    myVertxApplication.launch(new String[]{HttpTestVerticle.class.getName()}, hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[]{HttpTestVerticle.class.getName()}, hooks);
+    app.launch();
     assertServerStarted();
   }
 
   @Test
   public void testDeploymentOfJavaVerticleWithCluster() throws IOException {
-    VertxApplication myVertxApplication = new VertxApplication();
-    myVertxApplication.launch(new String[]{HttpTestVerticle.class.getName(), "-cluster"}, hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[]{HttpTestVerticle.class.getName(), "-cluster"}, hooks);
+    app.launch();
     assertServerStarted();
     assertEquals(TRUE, getContent().getBoolean("clustered"));
   }
@@ -107,8 +105,8 @@ public class VertxApplicationTest {
   public void testFatJarWithoutMainVerticle() throws Exception {
     setManifest("META-INF/MANIFEST-No-Main-Verticle.MF");
     Integer exitCode = captureOutput(() -> {
-      VertxApplication myVertxApplication = new VertxApplication();
-      return myVertxApplication.launch(new String[0], hooks);
+      TestVertxApplication app = new TestVertxApplication(new String[0], hooks);
+      return app.launch();
     });
     assertEquals(VERTX_DEPLOYMENT, exitCode);
     assertTrue(out.toString().contains("Usage:"));
@@ -118,8 +116,8 @@ public class VertxApplicationTest {
   public void testFatJarWithMissingMainVerticle() throws Exception {
     setManifest("META-INF/MANIFEST-Missing-Main-Verticle.MF");
     Integer exitCode = captureOutput(() -> {
-      VertxApplication myVertxApplication = new VertxApplication();
-      return myVertxApplication.launch(new String[0], hooks);
+      TestVertxApplication app = new TestVertxApplication(new String[0], hooks);
+      return app.launch();
     });
     assertEquals(VERTX_DEPLOYMENT, exitCode);
     assertTrue(out.toString().contains("Usage:"));
@@ -129,8 +127,8 @@ public class VertxApplicationTest {
   @Test
   public void testFatJarWithHTTPVerticle() throws Exception {
     setManifest("META-INF/MANIFEST-Http-Verticle.MF");
-    VertxApplication myVertxApplication = new VertxApplication();
-    myVertxApplication.launch(new String[0], hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[0], hooks);
+    app.launch();
     assertServerStarted();
     assertEquals(FALSE, getContent().getBoolean("clustered"));
   }
@@ -138,8 +136,8 @@ public class VertxApplicationTest {
   @Test
   public void testFatJarWithHTTPVerticleWithCluster() throws Exception {
     setManifest("META-INF/MANIFEST-Http-Verticle.MF");
-    VertxApplication myVertxApplication = new VertxApplication();
-    myVertxApplication.launch(new String[]{"-cluster"}, hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[]{"-cluster"}, hooks);
+    app.launch();
     assertServerStarted();
     assertEquals(TRUE, getContent().getBoolean("clustered"));
   }
@@ -147,9 +145,9 @@ public class VertxApplicationTest {
   @Test
   public void testWithConfProvidedInline() throws Exception {
     setManifest("META-INF/MANIFEST-Http-Verticle.MF");
-    VertxApplication myVertxApplication = new VertxApplication();
     long someNumber = new Random().nextLong();
-    myVertxApplication.launch(new String[]{"--conf={\"random\":" + someNumber + "}"}, hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[]{"--conf={\"random\":" + someNumber + "}"}, hooks);
+    app.launch();
     assertServerStarted();
     assertEquals(someNumber, getContent().getJsonObject("conf").getLong("random"));
   }
@@ -157,10 +155,10 @@ public class VertxApplicationTest {
   @Test
   public void testWithBrokenConfProvidedInline() throws Exception {
     setManifest("META-INF/MANIFEST-Http-Verticle.MF");
-    VertxApplication myVertxApplication = new VertxApplication();
     // There is a missing curly brace in the json fragment.
     // This is normal, as the test checks that the configuration is not read in this case.
-    myVertxApplication.launch(new String[]{"--conf={\"name\":\"vertx\""}, hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[]{"--conf={\"name\":\"vertx\""}, hooks);
+    app.launch();
     assertServerStarted();
     assertEquals("{}", getContent().getJsonObject("conf").toString().replaceAll("\\s", ""));
   }
@@ -168,11 +166,11 @@ public class VertxApplicationTest {
   @Test
   public void testWithConfProvidedAsFile() throws Exception {
     setManifest("META-INF/MANIFEST-Http-Verticle.MF");
-    VertxApplication myVertxApplication = new VertxApplication();
     URI resource = getClass().getClassLoader().getResource("verticle-conf.json").toURI();
     assertEquals("file", resource.getScheme());
     Path source = Paths.get(resource);
-    myVertxApplication.launch(new String[]{"--conf", source.toString()}, hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[]{"--conf", source.toString()}, hooks);
+    app.launch();
     assertServerStarted();
     assertEquals("vertx", getContent().getJsonObject("conf").getString("name"));
   }
@@ -180,9 +178,8 @@ public class VertxApplicationTest {
   @Test
   public void testMetricsEnabledFromCommandLine() throws Exception {
     setManifest("META-INF/MANIFEST-Http-Verticle.MF");
-    VertxApplication myVertxApplication = new VertxApplication();
     AtomicReference<MetricsOptions> metricsOptions = new AtomicReference<>();
-    hooks = new MyHooks() {
+    hooks = new TestHooks() {
       @Override
       public void beforeStartingVertx(HookContext context) {
         metricsOptions.set(context.vertxOptions().getMetricsOptions());
@@ -192,7 +189,8 @@ public class VertxApplicationTest {
     Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.core.CustomMetricsFactory"));
     try {
       System.setProperty("vertx.metrics.options.enabled", "true");
-      myVertxApplication.launch(new String[0], hooks);
+      TestVertxApplication app = new TestVertxApplication(new String[0], hooks);
+      app.launch();
     } finally {
       Thread.currentThread().setContextClassLoader(oldCL);
       clearProperties();
@@ -213,8 +211,8 @@ public class VertxApplicationTest {
   }
 
   public void testRunVerticleMultiple(int instances) {
-    VertxApplication myVertxApplication = new VertxApplication();
-    myVertxApplication.launch(new String[]{"java:" + TestVerticle.class.getCanonicalName(), "-instances", String.valueOf(instances)}, hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[]{"java:" + TestVerticle.class.getCanonicalName(), "-instances", String.valueOf(instances)}, hooks);
+    app.launch();
     await("Server not started")
       .atMost(Duration.ofSeconds(10))
       .until(() -> TestVerticle.instanceCount.get(), equalTo(instances));
@@ -250,15 +248,15 @@ public class VertxApplicationTest {
       optionsArg = json.toString();
     }
 
-    VertxApplication myVertxApplication = new VertxApplication();
     AtomicReference<VertxOptions> vertxOptions = new AtomicReference<>();
-    hooks = new MyHooks() {
+    hooks = new TestHooks() {
       @Override
       public void beforeStartingVertx(HookContext context) {
         vertxOptions.set(context.vertxOptions());
       }
     };
-    myVertxApplication.launch(new String[]{"java:" + TestVerticle.class.getCanonicalName(), "-options", optionsArg}, hooks);
+    TestVertxApplication app = new TestVertxApplication(new String[]{"java:" + TestVerticle.class.getCanonicalName(), "-options", optionsArg}, hooks);
+    app.launch();
     await("Server not started")
       .atMost(Duration.ofSeconds(10))
       .until(() -> TestVerticle.instanceCount.get(), equalTo(1));
@@ -283,7 +281,6 @@ public class VertxApplicationTest {
   }
 
   private void testConfigureFromSystemProperties(boolean clustered) {
-    VertxApplication myVertxApplication = new VertxApplication();
     String[] args;
     if (clustered) {
       args = new String[]{"java:" + TestVerticle.class.getCanonicalName(), "-cluster"};
@@ -292,7 +289,7 @@ public class VertxApplicationTest {
     }
 
     AtomicReference<VertxOptions> vertxOptions = new AtomicReference<>();
-    hooks = new MyHooks() {
+    hooks = new TestHooks() {
       @Override
       public void beforeStartingVertx(HookContext context) {
         vertxOptions.set(context.vertxOptions());
@@ -306,7 +303,8 @@ public class VertxApplicationTest {
       System.setProperty("vertx.options.maxEventLoopExecuteTime", "123767667");
       System.setProperty("vertx.metrics.options.enabled", "true");
       System.setProperty("vertx.options.maxEventLoopExecuteTimeUnit", "SECONDS");
-      myVertxApplication.launch(args, hooks);
+      TestVertxApplication app = new TestVertxApplication(args, hooks);
+      app.launch();
     } finally {
       Thread.currentThread().setContextClassLoader(oldCL);
       clearProperties();
@@ -339,10 +337,8 @@ public class VertxApplicationTest {
 
   @Test
   public void testCustomMetricsOptions() {
-    VertxApplication myVertxApplication = new VertxApplication();
-
     AtomicReference<VertxOptions> vertxOptions = new AtomicReference<>();
-    hooks = new MyHooks() {
+    hooks = new TestHooks() {
       @Override
       public void beforeStartingVertx(HookContext context) {
         vertxOptions.set(context.vertxOptions());
@@ -353,7 +349,8 @@ public class VertxApplicationTest {
     try {
       System.setProperty("vertx.metrics.options.enabled", "true");
       System.setProperty("vertx.metrics.options.customProperty", "customPropertyValue");
-      myVertxApplication.launch(new String[]{"java:" + TestVerticle.class.getCanonicalName()}, hooks);
+      TestVertxApplication app = new TestVertxApplication(new String[]{"java:" + TestVerticle.class.getCanonicalName()}, hooks);
+      app.launch();
     } finally {
       Thread.currentThread().setContextClassLoader(oldCL);
       clearProperties();
@@ -382,16 +379,6 @@ public class VertxApplicationTest {
         return super.findResources(name);
       }
     };
-  }
-
-  public static class MyHooks implements VertxApplicationHooks {
-
-    volatile Vertx vertx;
-
-    @Override
-    public void afterVertxStarted(HookContext context) {
-      vertx = context.vertx();
-    }
   }
 
   private Integer captureOutput(Callable<Integer> callable) throws Exception {
@@ -445,5 +432,12 @@ public class VertxApplicationTest {
       }
     }
     return new JsonObject(builder.toString());
+  }
+
+  private static class TestVertxApplication extends io.vertx.core.application.VertxApplication {
+
+    public TestVertxApplication(String[] args, VertxApplicationHooks hooks) {
+      super(args, hooks, true, false);
+    }
   }
 }

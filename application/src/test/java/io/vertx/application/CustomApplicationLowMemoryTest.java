@@ -105,9 +105,13 @@ public class CustomApplicationLowMemoryTest {
 
   public static class MyVertxApplication extends VertxApplication implements VertxApplicationHooks {
 
+    public MyVertxApplication(String[] args) {
+      super(args);
+    }
+
     public static void main(String[] args) {
-      MyVertxApplication app = new MyVertxApplication();
-      app.launch(args, app);
+      MyVertxApplication app = new MyVertxApplication(args);
+      app.launch();
     }
 
     @Override
