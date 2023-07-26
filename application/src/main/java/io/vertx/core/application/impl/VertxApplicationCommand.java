@@ -119,7 +119,7 @@ public class VertxApplicationCommand implements Runnable {
     names = {"-w", "-worker", "--worker"},
     description = {
       "If specified, then the main verticle is deployed as a worker verticle.",
-      "Takes precedences over the value defined in deployment options.",
+      "Takes precedence over the value defined in deployment options.",
     },
     arity = "0"
   )
@@ -129,7 +129,7 @@ public class VertxApplicationCommand implements Runnable {
     names = {"-instances", "--instances"},
     description = {
       "Specifies how many instances of the verticle will be deployed.",
-      "Takes precedences over the value defined in deployment options."
+      "Takes precedence over the value defined in deployment options."
     }
   )
   @SuppressWarnings("unused")
