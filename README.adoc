@@ -1,0 +1,24 @@
+= Vert.x Application Launcher
+
+image:https://github.com/vert-x3/vertx-launcher/actions/workflows/ci-5.x.yml/badge.svg["Build Status (5.x)",link="https://github.com/vert-x3/vertx-launcher/actions/workflows/ci-5.x.yml"]
+
+In essence, launching a Vert.x application is not a complex task: write a class with a `main` method, create a Vert.x instance and deploy the main verticle.
+
+But, very often, the same problems must be solved, for example:
+
+* configuring the number of verticle instances
+* deploying the main verticle as a worker verticle
+* creating a clustered Vert.x instance
+* properly closing Vert.x when the JVM is asked to stop via signals
+
+The Vert.x application launcher is a tool which addresses such concerns, without repeating the same code in every project.
+
+NOTE: This module, introduced in Vert.x 5, replaces the Vert.x 4 `io.vertx.core.Launcher`.
+
+WARNING: This module has _Tech Preview_ status, this means the API can change between versions.
+
+Please see the in-source asciidoc documentation or the main documentation on the web-site for a full description
+of this component:
+
+* link:http://vertx.io/docs/vertx-launcher-application/java/[web-site docs]
+* link:application/src/main/asciidoc/index.adoc[in-source docs]
