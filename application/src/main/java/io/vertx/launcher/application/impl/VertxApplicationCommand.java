@@ -9,12 +9,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.core.application.impl;
+package io.vertx.launcher.application.impl;
 
 import io.vertx.core.*;
-import io.vertx.core.application.ExitCodes;
-import io.vertx.core.application.VertxApplication;
-import io.vertx.core.application.VertxApplicationHooks;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.impl.VertxBuilder;
 import io.vertx.core.impl.VertxInternal;
@@ -25,6 +22,9 @@ import io.vertx.core.spi.VertxMetricsFactory;
 import io.vertx.core.spi.VertxServiceProvider;
 import io.vertx.core.spi.VertxTracerFactory;
 import io.vertx.core.tracing.TracingOptions;
+import io.vertx.launcher.application.ExitCodes;
+import io.vertx.launcher.application.VertxApplication;
+import io.vertx.launcher.application.VertxApplicationHooks;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import static io.vertx.core.application.impl.Utils.*;
+import static io.vertx.launcher.application.impl.Utils.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 import static picocli.CommandLine.Parameters.NULL_VALUE;

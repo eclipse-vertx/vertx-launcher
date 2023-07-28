@@ -12,9 +12,9 @@
 package examples;
 
 import io.vertx.core.VertxOptions;
-import io.vertx.core.application.HookContext;
-import io.vertx.core.application.VertxApplication;
-import io.vertx.core.application.VertxApplicationHooks;
+import io.vertx.launcher.application.HookContext;
+import io.vertx.launcher.application.VertxApplication;
+import io.vertx.launcher.application.VertxApplicationHooks;
 
 @SuppressWarnings("unused")
 public class Examples {

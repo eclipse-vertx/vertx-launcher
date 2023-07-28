@@ -1,2 +1,2 @@
-Main-Class: io.vertx.application.VertxApplicationTest$TestVertxApplication
+Main-Class: io.vertx.launcher.application.VertxApplicationTest$TestVertxApplication
 Main-Verticle: org.acme.MissingVerticle

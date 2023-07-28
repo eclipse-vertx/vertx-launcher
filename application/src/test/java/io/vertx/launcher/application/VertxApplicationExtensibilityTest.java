@@ -9,12 +9,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.application;
+package io.vertx.launcher.application;
 
 import io.vertx.core.Verticle;
-import io.vertx.core.application.HookContext;
-import io.vertx.core.application.VertxApplication;
-import io.vertx.core.application.VertxApplicationHooks;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.impl.DummyVertxMetrics;
@@ -25,8 +22,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.function.Supplier;
 
-import static io.vertx.application.VertxApplicationTest.assertServerStarted;
-import static io.vertx.application.VertxApplicationTest.getContent;
+import static io.vertx.launcher.application.VertxApplicationTest.assertServerStarted;
+import static io.vertx.launcher.application.VertxApplicationTest.getContent;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;

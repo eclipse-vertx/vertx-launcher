@@ -40,15 +40,15 @@ dependencies {
 
 == Getting started
 
-To start your Vert.x application, use {@link io.vertx.core.application.VertxApplication} as the main class.
+To start your Vert.x application, use {@link io.vertx.launcher.application.VertxApplication} as the main class.
 
 [source,shell]
 ----
 # Assuming the command is executed on a Unix-like system which has the classpath configured in the CLASSPATH environment variable.
-java -cp $CLASSPATH io.vertx.core.application.VertxApplication my.app.MainVerticle
+java -cp $CLASSPATH io.vertx.launcher.application.VertxApplication my.app.MainVerticle
 ----
 
-If your application is packaged as an executable JAR, having the `Main-Class` attribute set to `io.vertx.core.application.VertxApplication` in the `META-INF/MANIFEST.MF` file, the command can be simplified.
+If your application is packaged as an executable JAR, having the `Main-Class` attribute set to `io.vertx.launcher.application.VertxApplication` in the `META-INF/MANIFEST.MF` file, the command can be simplified.
 
 [source,shell]
 ----
@@ -59,22 +59,22 @@ java -jar myapp.jar my.app.MainVerticle
 
 === Main verticle parameter
 
-The {@link io.vertx.core.application.VertxApplication} main class accepts a single parameter, which is the name of the main verticle to deploy.
+The {@link io.vertx.launcher.application.VertxApplication} main class accepts a single parameter, which is the name of the main verticle to deploy.
 
 This parameter is optional if your application is packaged as an executable JAR having, in the `META-INF/MANIFEST.MF` file:
 
-* the `Main-Class` attribute set to `io.vertx.core.application.VertxApplication` (or a subclass, as explained below), and
+* the `Main-Class` attribute set to `io.vertx.launcher.application.VertxApplication` (or a subclass, as explained below), and
 * the `Main-Verticle` attribute set to the name of the main verticle.
 
 .`META-INF/MANIFEST.MF` file
 ----
-Main-Class: io.vertx.core.application.VertxApplication
+Main-Class: io.vertx.launcher.application.VertxApplication
 Main-Verticle: my.app.MainVerticle
 ----
 
 === Options
 
-In addition to the main verticle parameter, the {@link io.vertx.core.application.VertxApplication} main class accepts several options.
+In addition to the main verticle parameter, the {@link io.vertx.launcher.application.VertxApplication} main class accepts several options.
 
 *-options, --options, -vertx-options, --vertx-options*=_<vertxOptionsStr>_::
 Specifies the Vert.x options.
@@ -132,7 +132,7 @@ Display a help message.
 Sometimes, it is useful to change the default behavior depending on the environment, or the configuration.
 Or, perhaps, you would like to execute some actions after Vert.x has started.
 
-For such cases, you can create a main class and an instance of {@link io.vertx.core.application.VertxApplication} using hooks.
+For such cases, you can create a main class and an instance of {@link io.vertx.launcher.application.VertxApplication} using hooks.
 
 [source,$lang]
 .`main` method implementation
@@ -140,7 +140,7 @@ For such cases, you can create a main class and an instance of {@link io.vertx.c
 {@link examples.Examples#hooks}
 ----
 
-Please refer to the {@link io.vertx.core.application.VertxApplicationHooks} and {@link io.vertx.core.application.HookContext} documentation for further details about the hooks.
+Please refer to the {@link io.vertx.launcher.application.VertxApplicationHooks} and {@link io.vertx.launcher.application.HookContext} documentation for further details about the hooks.
 
 === Subclassing
 

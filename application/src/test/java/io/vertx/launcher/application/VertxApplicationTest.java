@@ -9,12 +9,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.application;
+package io.vertx.launcher.application;
 
 import io.vertx.core.CustomMetricsOptions;
 import io.vertx.core.VertxOptions;
-import io.vertx.core.application.HookContext;
-import io.vertx.core.application.VertxApplicationHooks;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.VertxServiceProvider;
@@ -40,7 +38,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.vertx.core.application.ExitCodes.VERTX_DEPLOYMENT;
+import static io.vertx.launcher.application.ExitCodes.VERTX_DEPLOYMENT;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
@@ -434,7 +432,7 @@ public class VertxApplicationTest {
     return new JsonObject(builder.toString());
   }
 
-  private static class TestVertxApplication extends io.vertx.core.application.VertxApplication {
+  private static class TestVertxApplication extends VertxApplication {
 
     public TestVertxApplication(String[] args, VertxApplicationHooks hooks) {
       super(args, hooks, true, false);

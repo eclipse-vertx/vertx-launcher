@@ -1,1 +1,1 @@
-Automatic-Module-Name: io.vertx.core.application
+Automatic-Module-Name: io.vertx.launcher.application

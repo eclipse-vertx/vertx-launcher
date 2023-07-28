@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.core.application.impl;
+package io.vertx.launcher.application.impl;
 
 import io.vertx.core.VertxException;
 import io.vertx.core.buffer.Buffer;

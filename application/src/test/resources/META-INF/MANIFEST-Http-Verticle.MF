@@ -1,2 +1,2 @@
-Main-Class: io.vertx.application.VertxApplicationTest$TestVertxApplication
-Main-Verticle: io.vertx.application.HttpTestVerticle
+Main-Class: io.vertx.launcher.application.VertxApplicationTest$TestVertxApplication
+Main-Verticle: io.vertx.launcher.application.HttpTestVerticle

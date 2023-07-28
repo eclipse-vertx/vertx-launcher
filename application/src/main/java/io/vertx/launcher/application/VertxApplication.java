@@ -9,12 +9,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.core.application;
+package io.vertx.launcher.application;
 
-import io.vertx.core.application.impl.CommandException;
-import io.vertx.core.application.impl.VertxApplicationCommand;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.launcher.application.impl.CommandException;
+import io.vertx.launcher.application.impl.VertxApplicationCommand;
 import picocli.CommandLine;
 
 import java.util.Objects;

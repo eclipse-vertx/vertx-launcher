@@ -9,14 +9,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.core.application;
+package io.vertx.launcher.application.impl;
 
-public class ExitCodes {
+import io.vertx.launcher.application.HookContext;
+import io.vertx.launcher.application.VertxApplicationHooks;
 
-  public static final int VERTX_INITIALIZATION = 11;
-  public static final int VERTX_DEPLOYMENT = 15;
-
-  private ExitCodes() {
-    // Constants
-  }
+@FunctionalInterface
+public interface FailureHook {
+  void invokeHook(VertxApplicationHooks hooks, HookContext ctx, Throwable t);
 }

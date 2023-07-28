@@ -9,12 +9,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.core.application.impl;
+package io.vertx.launcher.application.impl;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import io.vertx.core.application.HookContext;
+import io.vertx.launcher.application.HookContext;
 
 public class HookContextImpl implements HookContext {
 
