@@ -21,7 +21,7 @@
     <version>5.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>vertx-application-launcher</artifactId>
+  <artifactId>vertx-launcher-application</artifactId>
 
   <name>Vert.x Application Launcher</name>
 
