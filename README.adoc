@@ -1,6 +1,6 @@
 = Vert.x Application Launcher
 
-image:https://github.com/vert-x3/vertx-launcher/actions/workflows/ci-5.x.yml/badge.svg["Build Status (5.x)",link="https://github.com/vert-x3/vertx-launcher/actions/workflows/ci-5.x.yml"]
+image:https://github.com/eclipse-vertx/vertx-launcher/actions/workflows/ci-5.x.yml/badge.svg["Build Status (5.x)",link="https://github.com/eclipse-vertx/vertx-launcher/actions/workflows/ci-5.x.yml"]
 
 In essence, launching a Vert.x application is not a complex task: write a class with a `main` method, create a Vert.x instance and deploy the main verticle.
 
