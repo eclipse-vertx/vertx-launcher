@@ -213,7 +213,7 @@ public class VertxApplicationCommand implements Runnable {
     }
 
     hooks.beforeDeployingVerticle(hookContext);
-    String message = hookContext.deploymentOptions().isWorker() ? "deploying worker verticle" : "deploying verticle";
+    String message = hookContext.deploymentOptions().getThreadingModel() == ThreadingModel.WORKER ? "deploying worker verticle" : "deploying verticle";
     String deploymentId = withTCCLAwait(deployer, Duration.ofMinutes(2), message, VertxApplicationHooks::afterFailureToDeployVerticle, ExitCodes.VERTX_DEPLOYMENT);
     log.info("Succeeded in " + message);
     hookContext.setDeploymentId(deploymentId);
@@ -282,7 +282,7 @@ public class VertxApplicationCommand implements Runnable {
     JsonObject deploymentOptionsJson = readJsonFileOrString(log, "deploymentOptions", deploymentOptionsStr);
     DeploymentOptions deploymentOptions = deploymentOptionsJson != null ? new DeploymentOptions(deploymentOptionsJson) : new DeploymentOptions();
     if (worker == Boolean.TRUE) {
-      deploymentOptions.setWorker(true);
+      deploymentOptions.setThreadingModel(ThreadingModel.WORKER);
     }
     if (instances != null) {
       deploymentOptions.setInstances(instances);

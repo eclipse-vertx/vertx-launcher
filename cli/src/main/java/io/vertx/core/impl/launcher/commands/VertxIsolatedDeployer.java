@@ -38,7 +38,7 @@ public class VertxIsolatedDeployer {
   public void deploy(String verticle, Vertx vertx, DeploymentOptions options,
                      Handler<AsyncResult<String>> completionHandler) {
     this.vertx = vertx;
-    String message = (options.isWorker()) ? "deploying worker verticle" : "deploying verticle";
+    String message = (options.getThreadingModel() == ThreadingModel.WORKER) ? "deploying worker verticle" : "deploying verticle";
     vertx.deployVerticle(verticle, options).onComplete(createHandler(message, completionHandler));
   }
 
