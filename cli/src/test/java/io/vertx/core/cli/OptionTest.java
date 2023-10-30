@@ -60,8 +60,16 @@ public class OptionTest extends VertxTestBase {
     assertEquals(copy.isHidden(), option.isHidden());
     assertEquals(copy.getLongName(), option.getLongName());
     assertEquals(copy.isMultiValued(), option.isMultiValued());
-    assertEquals(copy.isRequired(), option.isRequired());
+    if (option.getDefaultValue() == null) {
+      assertEquals(copy.isRequired(), option.isRequired());
+    } else {
+      assertFalse(copy.isRequired());
+    }
     assertEquals(copy.getShortName(), option.getShortName());
-    assertEquals(copy.isSingleValued(), option.isSingleValued());
+    if (option.isFlag()) {
+      assertFalse(copy.isSingleValued());
+    } else {
+      assertEquals(copy.isSingleValued(), option.isSingleValued());
+    }
   }
 }
