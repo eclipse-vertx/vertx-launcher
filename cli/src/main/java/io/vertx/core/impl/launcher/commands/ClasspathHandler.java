@@ -14,7 +14,6 @@ package io.vertx.core.impl.launcher.commands;
 import io.vertx.core.*;
 import io.vertx.core.cli.annotations.Description;
 import io.vertx.core.cli.annotations.Option;
-import io.vertx.core.impl.VertxBuilder;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.spi.launcher.DefaultCommand;
@@ -107,7 +106,7 @@ public abstract class ClasspathHandler extends DefaultCommand {
     final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
     try {
       Thread.currentThread().setContextClassLoader(classloader != null ? classloader : getClass().getClassLoader());
-      return builder.vertx();
+      return builder.build();
     } catch (Exception e) {
       log.error("Failed to create the vert.x instance", e);
     } finally {
@@ -126,7 +125,7 @@ public abstract class ClasspathHandler extends DefaultCommand {
     final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
     try {
       Thread.currentThread().setContextClassLoader(classloader != null ? classloader : getClass().getClassLoader());
-      return builder.clusteredVertx();
+      return builder.buildClustered();
     } catch (Exception e) {
       log.error("Failed to create the vert.x instance", e);
       return Future.failedFuture(e);

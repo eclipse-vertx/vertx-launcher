@@ -12,6 +12,8 @@
 package io.vertx.launcher.application;
 
 import io.vertx.core.Verticle;
+import io.vertx.core.VertxBuilder;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.impl.DummyVertxMetrics;
@@ -104,8 +106,12 @@ public class VertxApplicationExtensibilityTest {
       @Override
       public void beforeStartingVertx(HookContext context) {
         context.vertxOptions().getMetricsOptions()
-          .setEnabled(true)
-          .setFactory(options -> DummyVertxMetrics.INSTANCE);
+          .setEnabled(true);
+      }
+
+      @Override
+      public VertxBuilder createVertxBuilder(VertxOptions options) {
+        return super.createVertxBuilder(options).withMetrics(o -> DummyVertxMetrics.INSTANCE);
       }
     };
     TestVertxApplication app = new TestVertxApplication(new String[0], hooks);
@@ -124,8 +130,8 @@ public class VertxApplicationExtensibilityTest {
       }
 
       @Override
-      public void beforeStartingVertx(HookContext context) {
-        context.vertxOptions().setClusterManager(clusterManager);
+      public VertxBuilder createVertxBuilder(VertxOptions options) {
+        return super.createVertxBuilder(options).withClusterManager(clusterManager);
       }
     };
     TestVertxApplication app = new TestVertxApplication(new String[]{"-cluster"}, hooks);

@@ -12,6 +12,9 @@
 package io.vertx.launcher.application;
 
 import io.vertx.core.Verticle;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxBuilder;
+import io.vertx.core.VertxOptions;
 
 import java.util.function.Supplier;
 
@@ -28,6 +31,10 @@ public interface VertxApplicationHooks {
    * @param context exposes objects available at this stage of the {@link VertxApplication} launch process
    */
   default void beforeStartingVertx(HookContext context) {
+  }
+
+  default VertxBuilder createVertxBuilder(VertxOptions options) {
+    return Vertx.builder().with(options);
   }
 
   /**

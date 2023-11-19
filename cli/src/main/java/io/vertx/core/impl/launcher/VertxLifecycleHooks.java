@@ -11,9 +11,7 @@
 
 package io.vertx.core.impl.launcher;
 
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
+import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -38,6 +36,14 @@ public interface VertxLifecycleHooks {
    * @param options the vert.x options
    */
   void beforeStartingVertx(VertxOptions options);
+
+  /**
+   * Hook for sub-classes of {@link Launcher} to customize the Vert.x builder.
+   *
+   * @param options the configured Vert.x options
+   * @return the builder configured with the {@code options}
+   */
+  VertxBuilder createVertxBuilder(VertxOptions options);
 
   /**
    * Hook for sub-classes of the {@link io.vertx.core.Launcher} class after the vertx instance is started.
