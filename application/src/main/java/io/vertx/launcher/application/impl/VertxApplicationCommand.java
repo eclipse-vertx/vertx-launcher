@@ -13,7 +13,6 @@ package io.vertx.launcher.application.impl;
 
 import io.vertx.core.*;
 import io.vertx.core.eventbus.EventBusOptions;
-import io.vertx.core.impl.VertxBuilder;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.json.JsonObject;
@@ -181,13 +180,17 @@ public class VertxApplicationCommand implements Runnable {
   @Override
   public void run() {
     JsonObject optionsJson = readJsonFileOrString(log, "options", vertxOptionsStr);
-    VertxBuilder builder = optionsJson != null ? new VertxBuilder(optionsJson) : new VertxBuilder();
+    VertxOptions options;
+    if (optionsJson != null) {
+      options = new VertxOptions(optionsJson);
+    } else {
+      options = new VertxOptions();
+    }
+    VertxBuilder builder = hooks.createVertxBuilder(options);
+    processVertxOptions(options, optionsJson);
 
-    processVertxOptions(builder.options(), optionsJson);
-
-    hookContext.setVertxOptions(builder.options());
+    hookContext.setVertxOptions(options);
     hooks.beforeStartingVertx(hookContext);
-    builder.init();
     vertx = (VertxInternal) withTCCLAwait(() -> createVertx(builder), Duration.ofMinutes(2), "startup", VertxApplicationHooks::afterFailureToStartVertx, ExitCodes.VERTX_INITIALIZATION);
     hookContext.setVertx(vertx);
     hooks.afterVertxStarted(hookContext);
@@ -300,11 +303,11 @@ public class VertxApplicationCommand implements Runnable {
     try {
       if (clustered == Boolean.TRUE) {
         log.info("Starting clustering...");
-        return builder.clusteredVertx().onFailure(t -> {
+        return builder.buildClustered().onFailure(t -> {
           log.error("Failed to form cluster", t);
         });
       } else {
-        return Future.succeededFuture(builder.vertx());
+        return Future.succeededFuture(builder.build());
       }
     } catch (Exception e) {
       log.error("Failed to create the Vert.x instance", e);

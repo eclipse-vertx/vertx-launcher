@@ -69,7 +69,16 @@ public class Launcher extends VertxCommandLauncher implements VertxLifecycleHook
    * @param options the configured Vert.x options. Modify them to customize the Vert.x instance.
    */
   public void beforeStartingVertx(VertxOptions options) {
+  }
 
+  /**
+   * Hook for sub-classes of {@link Launcher} to customize the Vert.x builder.
+   *
+   * @param options the configured Vert.x options
+   * @return the builder configured with the {@code options}
+   */
+  public VertxBuilder createVertxBuilder(VertxOptions options) {
+    return Vertx.builder().with(options);
   }
 
   /**

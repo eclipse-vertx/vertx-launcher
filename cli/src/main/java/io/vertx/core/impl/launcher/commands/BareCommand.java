@@ -15,7 +15,6 @@ import io.vertx.core.*;
 import io.vertx.core.cli.annotations.*;
 import io.vertx.core.eventbus.AddressHelper;
 import io.vertx.core.eventbus.EventBusOptions;
-import io.vertx.core.impl.VertxBuilder;
 import io.vertx.core.impl.launcher.VertxLifecycleHooks;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.json.DecodeException;
@@ -34,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.toList;
 
@@ -203,15 +203,13 @@ public class BareCommand extends ClasspathHandler {
     JsonObject optionsJson = getJsonFromFileOrString(vertxOptions, "options");
 
     EventBusOptions eventBusOptions;
-    VertxBuilder builder;
     if (optionsJson == null) {
+      options = new VertxOptions();
       eventBusOptions = getEventBusOptions();
-      builder = new VertxBuilder();
     } else {
+      options = new VertxOptions(optionsJson);
       eventBusOptions = getEventBusOptions(optionsJson.getJsonObject("eventBusOptions"));
-      builder = new VertxBuilder(optionsJson);
     }
-    options = builder.options();
     options.setEventBusOptions(eventBusOptions);
 
     VertxMetricsFactory metricsFactory = findServiceProvider(VertxMetricsFactory.class);
@@ -227,7 +225,12 @@ public class BareCommand extends ClasspathHandler {
           metricsOptions = metricsFactory.newOptions(metricsOptions);
         }
       }
-      configureFromSystemProperties(metricsOptions, METRICS_OPTIONS_PROP_PREFIX);
+      configureFromSystemProperties.set(log);
+      try {
+        configureFromSystemProperties(metricsOptions, METRICS_OPTIONS_PROP_PREFIX);
+      } finally {
+        configureFromSystemProperties.set(null);
+      }
       options.setMetricsOptions(metricsOptions);
     }
 
@@ -241,15 +244,10 @@ public class BareCommand extends ClasspathHandler {
 
     beforeStartingVertx(options);
 
-    configureFromSystemProperties.set(log);
-    try {
-      configureFromSystemProperties(options, VERTX_OPTIONS_PROP_PREFIX);
-      if (options.getMetricsOptions() != null) {
-        configureFromSystemProperties(options.getMetricsOptions(), METRICS_OPTIONS_PROP_PREFIX);
-      }
-      builder.init();
-    } finally {
-      configureFromSystemProperties.set(null);
+    VertxBuilder builder = createVertxBuilder(options);
+
+    if (metricsFactory != null) {
+      builder.withMetrics(metricsFactory);
     }
 
     Vertx instance;
@@ -284,12 +282,14 @@ public class BareCommand extends ClasspathHandler {
           options.setQuorumSize(quorum);
         }
       }
-
-      CountDownLatch latch = new CountDownLatch(1);
       AtomicReference<AsyncResult<Vertx>> result = new AtomicReference<>();
-      createClustered(builder).onComplete(ar -> {
-        result.set(ar);
-        latch.countDown();
+      CountDownLatch latch = new CountDownLatch(1);
+      configureFromSystemProperties(options, () -> {
+        createClustered(builder).onComplete(ar -> {
+          result.set(ar);
+          latch.countDown();
+        });
+        return null;
       });
       try {
         if (!latch.await(2, TimeUnit.MINUTES)) {
@@ -307,11 +307,24 @@ public class BareCommand extends ClasspathHandler {
       }
       instance = result.get().result();
     } else {
-      instance = create(builder);
+      instance = configureFromSystemProperties(options, () -> create(builder));
     }
     addShutdownHook(instance, log, finalAction);
     afterStartingVertx(instance);
     return instance;
+  }
+
+  private <T> T configureFromSystemProperties(VertxOptions options, Supplier<T> callback) {
+    configureFromSystemProperties.set(log);
+    try {
+      configureFromSystemProperties(options, VERTX_OPTIONS_PROP_PREFIX);
+      if (options.getMetricsOptions() != null) {
+        configureFromSystemProperties(options.getMetricsOptions(), METRICS_OPTIONS_PROP_PREFIX);
+      }
+      return callback.get();
+    } finally {
+      configureFromSystemProperties.set(null);
+    }
   }
 
   private <SP> SP findServiceProvider(Class<SP> serviceProviderClass) {
@@ -376,6 +389,15 @@ public class BareCommand extends ClasspathHandler {
     Object main = executionContext.main();
     if (main instanceof VertxLifecycleHooks) {
       ((VertxLifecycleHooks) main).beforeStartingVertx(options);
+    }
+  }
+
+  protected VertxBuilder createVertxBuilder(VertxOptions options) {
+    Object main = executionContext.main();
+    if (main instanceof VertxLifecycleHooks) {
+      return ((VertxLifecycleHooks) main).createVertxBuilder(options);
+    } else {
+      return Vertx.builder().with(options);
     }
   }
 

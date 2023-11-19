@@ -13,6 +13,7 @@ package io.vertx.core.impl.launcher;
 
 import io.vertx.core.Launcher;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxBuilder;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.cli.CLIException;
 import io.vertx.core.cli.annotations.Name;
@@ -186,7 +187,12 @@ public class LauncherExtensibilityTest extends CommandTestBase {
 
       @Override
       public void beforeStartingVertx(VertxOptions options) {
-        options.getMetricsOptions().setEnabled(true).setFactory(new FakeMetricsFactory());
+        options.getMetricsOptions().setEnabled(true);
+      }
+
+      @Override
+      public VertxBuilder createVertxBuilder(VertxOptions options) {
+        return super.createVertxBuilder(options).withMetrics(new FakeMetricsFactory());
       }
     };
 
@@ -218,8 +224,8 @@ public class LauncherExtensibilityTest extends CommandTestBase {
       }
 
       @Override
-      public void beforeStartingVertx(VertxOptions options) {
-        options.setClusterManager(clusterManager);
+      public VertxBuilder createVertxBuilder(VertxOptions options) {
+        return super.createVertxBuilder(options).withClusterManager(clusterManager);
       }
     };
 
