@@ -36,6 +36,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import static io.vertx.launcher.application.impl.Utils.*;
+import static java.lang.Boolean.TRUE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 import static picocli.CommandLine.Parameters.NULL_VALUE;
@@ -117,13 +118,23 @@ public class VertxApplicationCommand implements Runnable {
   @Option(
     names = {"-w", "-worker", "--worker"},
     description = {
-      "If specified, then the main verticle is deployed as a worker verticle.",
+      "If specified, then the main verticle is deployed with the worker threading model.",
       "Takes precedence over the value defined in deployment options.",
     },
     arity = "0"
   )
   @SuppressWarnings("unused")
   private Boolean worker;
+  @Option(
+    names = {"-vt", "-virtual-thread", "--virtual-thread"},
+    description = {
+      "If specified, then the main verticle is deployed with the virtual thread threading model.",
+      "Takes precedence over the value defined in deployment options.",
+    },
+    arity = "0"
+  )
+  @SuppressWarnings("unused")
+  private Boolean virtualThread;
   @Option(
     names = {"-instances", "--instances"},
     description = {
@@ -224,7 +235,7 @@ public class VertxApplicationCommand implements Runnable {
   }
 
   private void processVertxOptions(VertxOptions vertxOptions, JsonObject optionsJson) {
-    if (clustered == Boolean.TRUE) {
+    if (clustered == TRUE) {
       EventBusOptions eventBusOptions = vertxOptions.getEventBusOptions();
       if (clusterHost != null) {
         eventBusOptions.setHost(clusterHost);
@@ -284,8 +295,14 @@ public class VertxApplicationCommand implements Runnable {
   private DeploymentOptions createDeploymentOptions() {
     JsonObject deploymentOptionsJson = readJsonFileOrString(log, "deploymentOptions", deploymentOptionsStr);
     DeploymentOptions deploymentOptions = deploymentOptionsJson != null ? new DeploymentOptions(deploymentOptionsJson) : new DeploymentOptions();
-    if (worker == Boolean.TRUE) {
+    if (worker == TRUE) {
+      if (virtualThread == TRUE) {
+        log.error("Cannot choose the threading model, the virtual thread and worker options are both set.");
+        throw new CommandException(ExitCodes.VERTX_DEPLOYMENT);
+      }
       deploymentOptions.setThreadingModel(ThreadingModel.WORKER);
+    } else if (virtualThread == TRUE) {
+      deploymentOptions.setThreadingModel(ThreadingModel.VIRTUAL_THREAD);
     }
     if (instances != null) {
       deploymentOptions.setInstances(instances);
@@ -301,7 +318,7 @@ public class VertxApplicationCommand implements Runnable {
 
   private Future<Vertx> createVertx(VertxBuilder builder) {
     try {
-      if (clustered == Boolean.TRUE) {
+      if (clustered == TRUE) {
         log.info("Starting clustering...");
         return builder.buildClustered().onFailure(t -> {
           log.error("Failed to form cluster", t);

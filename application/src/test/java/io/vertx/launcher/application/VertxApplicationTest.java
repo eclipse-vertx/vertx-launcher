@@ -13,6 +13,7 @@ package io.vertx.launcher.application;
 
 import io.vertx.core.CustomMetricsOptions;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.VertxServiceProvider;
@@ -39,6 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.vertx.core.ThreadingModel.*;
 import static io.vertx.launcher.application.ExitCodes.VERTX_DEPLOYMENT;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
@@ -47,6 +49,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class VertxApplicationTest {
 
@@ -86,10 +89,39 @@ public class VertxApplicationTest {
   }
 
   @Test
-  public void testDeploymentOfJavaVerticle() {
+  public void testDeploymentOfEventLoopVerticle() throws IOException {
     TestVertxApplication app = new TestVertxApplication(new String[]{HttpTestVerticle.class.getName()}, hooks);
     app.launch();
     assertServerStarted();
+    assertEquals(EVENT_LOOP.toString(), getContent().getString("threadingModel"));
+  }
+
+  @Test
+  public void testDeploymentOfWorkerVerticle() throws IOException {
+    TestVertxApplication app = new TestVertxApplication(new String[]{"-w", HttpTestVerticle.class.getName()}, hooks);
+    app.launch();
+    assertServerStarted();
+    assertEquals(WORKER.toString(), getContent().getString("threadingModel"));
+  }
+
+  @Test
+  public void testDeploymentOfVirtualThreadVerticle() throws IOException {
+    assumeTrue(VertxInternal.isVirtualThreadAvailable());
+    TestVertxApplication app = new TestVertxApplication(new String[]{"-vt", HttpTestVerticle.class.getName()}, hooks);
+    app.launch();
+    assertServerStarted();
+    assertEquals(VIRTUAL_THREAD.toString(), getContent().getString("threadingModel"));
+  }
+
+  @Test
+  public void testFailureWhenBothWorkerAndVirtualOptionsAreSet() throws Exception {
+    Integer exitCode = captureOutput(() -> {
+      TestVertxApplication app = new TestVertxApplication(new String[]{"-vt", "-w", HttpTestVerticle.class.getName()}, hooks);
+      return app.launch();
+    });
+    assertEquals(VERTX_DEPLOYMENT, exitCode);
+    assertTrue(out.toString().contains("Usage:"));
+    assertTrue(err.toString().contains("threading model"));
   }
 
   @Test
