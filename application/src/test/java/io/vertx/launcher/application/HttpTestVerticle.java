@@ -24,6 +24,7 @@ public class HttpTestVerticle extends AbstractVerticle {
     vertx.createHttpServer().requestHandler(request -> {
       JsonObject json = new JsonObject();
       json
+        .put("threadingModel", context.threadingModel())
         .put("clustered", vertx.isClustered())
         .put("metrics", vertx.isMetricsEnabled())
         .put("id", System.getProperty("vertx.id", "no id"))

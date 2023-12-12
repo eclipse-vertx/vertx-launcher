@@ -6,7 +6,7 @@ In essence, launching a Vert.x application is not a complex task: write a class 
 But, very often, the same problems must be solved, for example:
 
 * configuring the number of verticle instances
-* deploying the main verticle as a worker verticle
+* deploying the main verticle with a specific {@link io.vertx.core.ThreadingModel threading model}
 * creating a clustered Vert.x instance
 * properly closing Vert.x when the JVM is asked to stop via signals
 
@@ -110,7 +110,12 @@ By default, Vert.x uses the same as the cluster host.
 Specifies the main verticle deployment options.
 
 *-w*, *-worker, --worker*::
-If specified, then the main verticle is deployed as a worker verticle.
+If specified, then the main verticle is deployed with the worker threading model.
++
+Takes precedence over the value defined in deployment options.
+
+*-vt*, *-virtual-thread, --virtual-thread*::
+If specified, then the main verticle is deployed with the virtual thread threading model.
 +
 Takes precedence over the value defined in deployment options.
 
