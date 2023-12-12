@@ -20,7 +20,6 @@ import io.vertx.test.fakecluster.FakeClusterManager;
 import io.vertx.test.verticles.TestVerticle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -270,13 +269,11 @@ public class VertxApplicationTest {
   }
 
   @Test
-  @Disabled("until Vert.x core PR is merged")
   public void testConfigureFromSystemProperties() {
     testConfigureFromSystemProperties(false);
   }
 
   @Test
-  @Disabled("until Vert.x core PR is merged")
   public void testConfigureFromSystemPropertiesClustered() {
     testConfigureFromSystemProperties(true);
   }
@@ -337,7 +334,6 @@ public class VertxApplicationTest {
   }
 
   @Test
-  @Disabled("until Vert.x core PR is merged")
   public void testCustomMetricsOptions() {
     AtomicReference<VertxOptions> vertxOptions = new AtomicReference<>();
     hooks = new TestHooks() {
