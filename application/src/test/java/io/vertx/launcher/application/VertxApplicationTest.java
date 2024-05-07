@@ -12,6 +12,7 @@
 package io.vertx.launcher.application;
 
 import io.vertx.core.CustomMetricsOptions;
+import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.json.JsonObject;
@@ -105,7 +106,12 @@ public class VertxApplicationTest {
 
   @Test
   public void testDeploymentOfVirtualThreadVerticle() throws IOException {
-    assumeTrue(VertxInternal.isVirtualThreadAvailable());
+    VertxInternal vertx = (VertxInternal) Vertx.vertx();
+    try {
+      assumeTrue(vertx.isVirtualThreadAvailable());
+    } finally {
+      vertx.close();
+    }
     TestVertxApplication app = new TestVertxApplication(new String[]{"-vt", HttpTestVerticle.class.getName()}, hooks);
     app.launch();
     assertServerStarted();
