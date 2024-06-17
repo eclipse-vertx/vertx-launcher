@@ -16,8 +16,8 @@
 
   <parent>
     <groupId>io.vertx</groupId>
-    <artifactId>vertx-ext-parent</artifactId>
-    <version>38</version>
+    <artifactId>vertx5-parent</artifactId>
+    <version>3</version>
   </parent>
 
   <artifactId>vertx-launcher-parent</artifactId>
@@ -49,25 +49,22 @@
 
   <properties>
     <stack.version>5.0.0-SNAPSHOT</stack.version>
-    <doc.skip>true</doc.skip>
-    <maven.compiler.release>11</maven.compiler.release>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-dependencies</artifactId>
+        <version>${stack.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <modules>
     <module>cli</module>
     <module>application</module>
   </modules>
-
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.1.0</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
-
 </project>
