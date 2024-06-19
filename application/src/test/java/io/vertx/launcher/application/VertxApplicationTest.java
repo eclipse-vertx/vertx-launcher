@@ -14,7 +14,7 @@ package io.vertx.launcher.application;
 import io.vertx.core.CustomMetricsOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.VertxServiceProvider;

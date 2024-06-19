@@ -15,9 +15,9 @@ import io.vertx.core.cli.CLIException;
 import io.vertx.core.cli.annotations.Description;
 import io.vertx.core.cli.annotations.Name;
 import io.vertx.core.cli.annotations.Summary;
-import io.vertx.core.impl.VertxInternal;
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.internal.VertxInternal;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.core.spi.launcher.DefaultCommand;
 
 /**

@@ -15,7 +15,7 @@ import io.vertx.core.*;
 import io.vertx.core.cli.CLIException;
 import io.vertx.core.cli.CommandLine;
 import io.vertx.core.cli.annotations.*;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.impl.launcher.VertxLifecycleHooks;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.spi.launcher.ExecutionContext;

@@ -14,8 +14,8 @@ package io.vertx.core.impl.launcher.commands;
 import io.vertx.core.*;
 import io.vertx.core.cli.annotations.Description;
 import io.vertx.core.cli.annotations.Option;
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.core.spi.launcher.DefaultCommand;
 
 import java.io.File;

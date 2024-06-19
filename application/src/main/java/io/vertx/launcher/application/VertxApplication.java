@@ -11,8 +11,8 @@
 
 package io.vertx.launcher.application;
 
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.launcher.application.impl.CommandException;
 import io.vertx.launcher.application.impl.VertxApplicationCommand;
 import picocli.CommandLine;

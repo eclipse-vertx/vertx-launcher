@@ -14,7 +14,7 @@ package io.vertx.launcher.application;
 import io.vertx.core.Verticle;
 import io.vertx.core.VertxBuilder;
 import io.vertx.core.VertxOptions;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.impl.DummyVertxMetrics;
 import io.vertx.test.fakecluster.FakeClusterManager;

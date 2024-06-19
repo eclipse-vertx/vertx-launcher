@@ -13,8 +13,8 @@ package io.vertx.launcher.application.impl;
 
 import io.vertx.core.*;
 import io.vertx.core.eventbus.EventBusOptions;
-import io.vertx.core.impl.VertxInternal;
-import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.internal.VertxInternal;
+import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.VertxMetricsFactory;

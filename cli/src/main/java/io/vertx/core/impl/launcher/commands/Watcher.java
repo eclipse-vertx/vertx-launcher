@@ -12,8 +12,8 @@
 package io.vertx.core.impl.launcher.commands;
 
 import io.vertx.core.Handler;
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.WatchService;

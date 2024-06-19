@@ -17,7 +17,7 @@ import io.vertx.core.VertxBuilder;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.cli.CLIException;
 import io.vertx.core.cli.annotations.Name;
-import io.vertx.core.impl.VertxInternal;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.impl.launcher.commands.CommandTestBase;
 import io.vertx.core.impl.launcher.commands.HttpTestVerticle;
 import io.vertx.core.impl.launcher.commands.RunCommandTest;

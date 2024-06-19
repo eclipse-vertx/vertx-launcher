@@ -16,7 +16,7 @@ import io.vertx.core.cli.annotations.*;
 import io.vertx.core.eventbus.AddressHelper;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.impl.launcher.VertxLifecycleHooks;
-import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
