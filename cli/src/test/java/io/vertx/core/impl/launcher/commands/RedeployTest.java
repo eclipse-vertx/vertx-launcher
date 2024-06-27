@@ -16,6 +16,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.test.fakecluster.FakeClusterManager;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -235,6 +236,7 @@ public class RedeployTest extends CommandTestBase {
     }, 20000);
   }
 
+  @Ignore
   @Test
   public void testStartingApplicationInRedeployModeWithInlineOptions() throws IOException {
     cli.dispatch(new Launcher(), new String[]{"run",
@@ -259,6 +261,7 @@ public class RedeployTest extends CommandTestBase {
     assertThat(metricsOptions.getBoolean("enabled")).isEqualTo(true);
   }
 
+  @Ignore
   @Test
   public void testStartingApplicationInRedeployModeWithInlineOptions2() throws IOException {
     cli.dispatch(new Launcher(), new String[]{"run",

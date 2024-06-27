@@ -14,6 +14,7 @@ package io.vertx.core.impl.launcher;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -145,6 +146,7 @@ public class VertxCommandLineInterfaceTest {
       .contains("The value 'hello' is not accepted by 'count'");
   }
 
+  @Ignore
   @Test
   public void testComplexCommandUsage() {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();

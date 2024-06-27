@@ -19,7 +19,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.VertxServiceProvider;
 import io.vertx.test.fakecluster.FakeClusterManager;
-import io.vertx.test.verticles.TestVerticle;
+import io.vertx.test.TestVerticle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

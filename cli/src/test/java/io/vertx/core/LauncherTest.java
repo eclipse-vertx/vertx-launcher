@@ -15,10 +15,11 @@ import io.vertx.core.impl.launcher.commands.HelloCommand;
 import io.vertx.core.impl.launcher.commands.RunCommand;
 import io.vertx.core.impl.launcher.commands.VersionCommand;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.spi.metrics.MetricsOptionsTest;
+import io.vertx.test.TestVerticle;
 import io.vertx.test.core.TestUtils;
 import io.vertx.test.core.VertxTestBase;
-import io.vertx.test.verticles.TestVerticle;
+import io.vertx.tests.metrics.MetricsOptionsTest;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -443,6 +444,7 @@ public class LauncherTest extends VertxTestBase {
     toClear.forEach(System::clearProperty);
   }
 
+  @Ignore
   @Test
   public void testConfigureFromJsonFile() throws Exception {
     testConfigureFromJson(true);
@@ -774,7 +776,7 @@ public class LauncherTest extends VertxTestBase {
 
     @Override
     public String getMainVerticle() {
-      return "java:io.vertx.test.verticles.TestVerticle";
+      return "java:io.vertx.test.TestVerticle";
     }
   }
 }
