@@ -47,16 +47,12 @@
     <url>git@github.com:eclipse-vertx/vertx-launcher.git</url>
   </scm>
 
-  <properties>
-    <stack.version>5.0.0-SNAPSHOT</stack.version>
-  </properties>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>io.vertx</groupId>
         <artifactId>vertx-dependencies</artifactId>
-        <version>${stack.version}</version>
+        <version>${project.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
