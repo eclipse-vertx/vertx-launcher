@@ -16,7 +16,7 @@ import io.vertx.core.VertxBuilder;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.metrics.impl.DummyVertxMetrics;
+import io.vertx.core.spi.metrics.VertxMetrics;
 import io.vertx.test.fakecluster.FakeClusterManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -111,7 +111,7 @@ public class VertxApplicationExtensibilityTest {
 
       @Override
       public VertxBuilder createVertxBuilder(VertxOptions options) {
-        return super.createVertxBuilder(options).withMetrics(o -> DummyVertxMetrics.INSTANCE);
+        return super.createVertxBuilder(options).withMetrics(o -> new VertxMetrics() {});
       }
     };
     TestVertxApplication app = new TestVertxApplication(new String[0], hooks);

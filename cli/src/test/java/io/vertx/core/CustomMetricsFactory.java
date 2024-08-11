@@ -13,7 +13,6 @@ package io.vertx.core;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
-import io.vertx.core.metrics.impl.DummyVertxMetrics;
 import io.vertx.core.spi.VertxMetricsFactory;
 import io.vertx.core.spi.metrics.VertxMetrics;
 
@@ -22,9 +21,12 @@ import io.vertx.core.spi.metrics.VertxMetrics;
  */
 public class CustomMetricsFactory implements VertxMetricsFactory {
 
+  public static final VertxMetrics DUMMY = new VertxMetrics() {
+  };
+
   @Override
   public VertxMetrics metrics(VertxOptions options) {
-    return DummyVertxMetrics.INSTANCE;
+    return DUMMY;
   }
 
   @Override
