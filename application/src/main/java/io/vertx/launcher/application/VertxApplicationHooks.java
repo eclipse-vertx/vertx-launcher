@@ -15,6 +15,7 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxBuilder;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.spi.VertxTracerFactory;
 
 import java.util.function.Supplier;
 
@@ -33,6 +34,14 @@ public interface VertxApplicationHooks {
   default void beforeStartingVertx(HookContext context) {
   }
 
+  /**
+   * Default implementation for the {@link VertxBuilder} creation.
+   * <p>
+   * This can be overridden in order to customize, for example, the tracer, with {@link VertxBuilder#withTracer(VertxTracerFactory)}.
+   *
+   * @param options the Vert.x options to use
+   * @return the Vert.x builder instance
+   */
   default VertxBuilder createVertxBuilder(VertxOptions options) {
     return Vertx.builder().with(options);
   }
