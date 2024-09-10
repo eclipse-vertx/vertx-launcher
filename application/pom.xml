@@ -54,14 +54,17 @@
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-codegen</artifactId>
-      <scope>provided</scope>
+      <artifactId>vertx-codegen-api</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-docgen</artifactId>
-      <scope>provided</scope>
+      <artifactId>vertx-codegen-json</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-docgen-api</artifactId>
       <optional>true</optional>
     </dependency>
     <!-- Test dependencies -->
