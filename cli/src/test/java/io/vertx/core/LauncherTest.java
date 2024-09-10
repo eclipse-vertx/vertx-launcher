@@ -15,6 +15,7 @@ import io.vertx.core.impl.launcher.commands.HelloCommand;
 import io.vertx.core.impl.launcher.commands.RunCommand;
 import io.vertx.core.impl.launcher.commands.VersionCommand;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.spi.VertxServiceProvider;
 import io.vertx.test.TestVerticle;
 import io.vertx.test.core.TestUtils;
 import io.vertx.test.core.VertxTestBase;
@@ -26,9 +27,11 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.*;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -488,6 +491,20 @@ public class LauncherTest extends VertxTestBase {
     assertEquals(TimeUnit.SECONDS, opts.getMaxEventLoopExecuteTimeUnit());
   }
 
+  public static ClassLoader createMetricsFromMetaInfLoader(String factoryFqn) {
+    return new URLClassLoader(new URL[0], Thread.currentThread().getContextClassLoader()) {
+      @Override
+      public Enumeration<URL> findResources(String name) throws IOException {
+        if (name.equals("META-INF/services/" + VertxServiceProvider.class.getName())) {
+          File f = File.createTempFile("vertx", ".txt");
+          f.deleteOnExit();
+          Files.write(f.toPath(), factoryFqn.getBytes());
+          return Collections.enumeration(Collections.singleton(f.toURI().toURL()));
+        }
+        return super.findResources(name);
+      }
+    };
+  }
   @Test
   public void testCustomMetricsOptions() {
     System.setProperty(RunCommand.METRICS_OPTIONS_PROP_PREFIX + "enabled", "true");
@@ -495,7 +512,7 @@ public class LauncherTest extends VertxTestBase {
     MyLauncher launcher = new MyLauncher();
     String[] args = {"run", "java:" + TestVerticle.class.getCanonicalName()};
     ClassLoader oldCL = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(MetricsOptionsTest.createMetricsFromMetaInfLoader("io.vertx.core.CustomMetricsFactory"));
+    Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.core.CustomMetricsFactory"));
     try {
       launcher.dispatch(args);
     } finally {
@@ -577,7 +594,7 @@ public class LauncherTest extends VertxTestBase {
     MyLauncher launcher = new MyLauncher();
     String[] args = {"run", "java:" + TestVerticle.class.getCanonicalName(), "-options", optionsArg};
     ClassLoader oldCL = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(MetricsOptionsTest.createMetricsFromMetaInfLoader("io.vertx.core.CustomMetricsFactory"));
+    Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.core.CustomMetricsFactory"));
     try {
       launcher.dispatch(args);
     } finally {

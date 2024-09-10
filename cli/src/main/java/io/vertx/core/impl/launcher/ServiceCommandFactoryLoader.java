@@ -11,7 +11,7 @@
 
 package io.vertx.core.impl.launcher;
 
-import io.vertx.core.ServiceHelper;
+import io.vertx.core.internal.ServiceHelper;
 import io.vertx.core.spi.launcher.CommandFactory;
 import io.vertx.core.spi.launcher.CommandFactoryLookup;
 
