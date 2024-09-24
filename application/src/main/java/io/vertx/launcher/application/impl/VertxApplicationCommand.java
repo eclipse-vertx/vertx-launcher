@@ -13,7 +13,7 @@ package io.vertx.launcher.application.impl;
 
 import io.vertx.core.*;
 import io.vertx.core.eventbus.EventBusOptions;
-import io.vertx.core.internal.ServiceHelper;
+import io.vertx.core.impl.ServiceHelper;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.json.JsonObject;
