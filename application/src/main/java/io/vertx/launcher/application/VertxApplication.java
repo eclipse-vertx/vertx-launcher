@@ -13,7 +13,7 @@ package io.vertx.launcher.application;
 
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
-import io.vertx.launcher.application.impl.CommandException;
+import io.vertx.launcher.application.impl.CommandExceptionHandler;
 import io.vertx.launcher.application.impl.VertxApplicationCommand;
 import picocli.CommandLine;
 
@@ -97,9 +97,9 @@ public class VertxApplication {
     VertxApplicationCommand command = new VertxApplicationCommand(this, Objects.requireNonNull(hooks), log);
     CommandLine commandLine = new CommandLine(command)
       .setOptionsCaseInsensitive(true)
-      .setExitCodeExceptionMapper(CommandException.EXIT_CODE_EXCEPTION_MAPPER);
+      .setExecutionExceptionHandler(new CommandExceptionHandler());
     int exitCode = commandLine.execute(args);
-    if (exitCode != 0) {
+    if (exitCode == ExitCodes.USAGE) {
       if (printUsageOnFailure) {
         CommandLine.usage(command, System.out, Ansi.ON);
       }
