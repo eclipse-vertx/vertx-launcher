@@ -50,15 +50,7 @@ public class VertxApplication {
    * @param args the program arguments
    */
   public VertxApplication(String[] args) {
-    this.args = Objects.requireNonNull(args);
-    if (this instanceof VertxApplicationHooks) {
-      hooks = (VertxApplicationHooks) this;
-    } else {
-      hooks = new VertxApplicationHooks() {
-      };
-    }
-    printUsageOnFailure = true;
-    exitOnFailure = true;
+    this(args, null);
   }
 
   /**
@@ -73,15 +65,25 @@ public class VertxApplication {
 
   /**
    * May be invoked by subclasses to customize behavior.
+   * <p>
+   * When the {@code hooks} parameter is {@code null}, the application instance will be used if it implements {@link  VertxApplicationHooks}.
    *
    * @param args                the program arguments
-   * @param hooks               an instance of {@link VertxApplicationHooks} to be invoked at different stages of the launch process
+   * @param hooks               an instance of {@link VertxApplicationHooks} to be invoked at different stages of the launch process (maybe null)
    * @param printUsageOnFailure whether usage should be printed to {@link System#out} if the application failed to start
    * @param exitOnFailure       whether the JVM should be terminated with a specific {@code exitCode} if the application failed to start
    */
   protected VertxApplication(String[] args, VertxApplicationHooks hooks, boolean printUsageOnFailure, boolean exitOnFailure) {
     this.args = Objects.requireNonNull(args);
-    this.hooks = Objects.requireNonNull(hooks);
+    if (hooks == null) {
+      if (this instanceof VertxApplicationHooks) {
+        this.hooks = (VertxApplicationHooks) this;
+      } else {
+        this.hooks = VertxApplicationHooks.DEFAULT;
+      }
+    } else {
+      this.hooks = hooks;
+    }
     this.printUsageOnFailure = printUsageOnFailure;
     this.exitOnFailure = exitOnFailure;
   }

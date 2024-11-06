@@ -24,6 +24,9 @@ import java.util.function.Supplier;
  */
 public interface VertxApplicationHooks {
 
+  VertxApplicationHooks DEFAULT = new VertxApplicationHooks() {
+  };
+
   /**
    * Invoked before starting Vert.x.
    * <p>
