@@ -18,8 +18,8 @@ import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.VertxServiceProvider;
-import io.vertx.test.fakecluster.FakeClusterManager;
 import io.vertx.test.TestVerticle;
+import io.vertx.test.fakecluster.FakeClusterManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.vertx.core.ThreadingModel.*;
+import static io.vertx.launcher.application.ExitCodes.USAGE;
 import static io.vertx.launcher.application.ExitCodes.VERTX_DEPLOYMENT;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
@@ -119,13 +120,24 @@ public class VertxApplicationTest {
   }
 
   @Test
+  public void testUsageDisplayedWhenInputIsInvalid() throws Exception {
+    Integer exitCode = captureOutput(() -> {
+      TestVertxApplication app = new TestVertxApplication(new String[]{"-instances", "BOOM", HttpTestVerticle.class.getName()}, hooks);
+      return app.launch();
+    });
+    assertEquals(USAGE, exitCode);
+    assertTrue(out.toString().contains("Usage:"));
+    assertTrue(err.toString().contains("BOOM"));
+  }
+
+  @Test
   public void testFailureWhenBothWorkerAndVirtualOptionsAreSet() throws Exception {
     Integer exitCode = captureOutput(() -> {
       TestVertxApplication app = new TestVertxApplication(new String[]{"-vt", "-w", HttpTestVerticle.class.getName()}, hooks);
       return app.launch();
     });
     assertEquals(VERTX_DEPLOYMENT, exitCode);
-    assertTrue(out.toString().contains("Usage:"));
+    assertFalse(out.toString().contains("Usage:"));
     assertTrue(err.toString().contains("threading model"));
   }
 
@@ -145,7 +157,7 @@ public class VertxApplicationTest {
       return app.launch();
     });
     assertEquals(VERTX_DEPLOYMENT, exitCode);
-    assertTrue(out.toString().contains("Usage:"));
+    assertFalse(out.toString().contains("Usage:"));
   }
 
   @Test
@@ -156,7 +168,7 @@ public class VertxApplicationTest {
       return app.launch();
     });
     assertEquals(VERTX_DEPLOYMENT, exitCode);
-    assertTrue(out.toString().contains("Usage:"));
+    assertFalse(out.toString().contains("Usage:"));
     assertTrue(err.toString().contains("ClassNotFoundException"));
   }
 

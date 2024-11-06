@@ -12,22 +12,20 @@
 package io.vertx.launcher.application.impl;
 
 import io.vertx.core.VertxException;
-import picocli.CommandLine.IExitCodeExceptionMapper;
 
+/**
+ * An exception than can be thrown to interrupt the processing of {@link VertxApplicationCommand} and specify which exit code should be used.
+ */
 public class CommandException extends VertxException {
-
-  public static final IExitCodeExceptionMapper EXIT_CODE_EXCEPTION_MAPPER = t -> {
-    if (t instanceof CommandException) {
-      CommandException commandException = (CommandException) t;
-      return commandException.code;
-    }
-    return 1;
-  };
 
   private final int code;
 
   public CommandException(int code) {
     super((String) null, true);
     this.code = code;
+  }
+
+  public int getCode() {
+    return code;
   }
 }

@@ -13,6 +13,8 @@ package io.vertx.launcher.application;
 
 public class ExitCodes {
 
+  public static final int SOFTWARE = 1;
+  public static final int USAGE = 2;
   public static final int VERTX_INITIALIZATION = 11;
   public static final int VERTX_DEPLOYMENT = 15;
 
