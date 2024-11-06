@@ -103,7 +103,7 @@ public class CustomApplicationLowMemoryTest {
   public static class MyVertxApplication extends VertxApplication implements VertxApplicationHooks {
 
     public MyVertxApplication(String[] args) {
-      super(args);
+      super(args, null, true, true);
     }
 
     public static void main(String[] args) {
