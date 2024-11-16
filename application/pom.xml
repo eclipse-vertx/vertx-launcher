@@ -59,11 +59,6 @@
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-codegen-json</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
       <artifactId>vertx-docgen-api</artifactId>
       <optional>true</optional>
     </dependency>
@@ -103,11 +98,16 @@
               <id>default-compile</id>
               <configuration>
                 <annotationProcessorPaths>
-                  <path>
+                  <annotationProcessorPath>
                     <groupId>info.picocli</groupId>
                     <artifactId>picocli-codegen</artifactId>
                     <version>${picocli.version}</version>
-                  </path>
+                  </annotationProcessorPath>
+                  <annotationProcessorPath>
+                    <groupId>io.vertx</groupId>
+                    <artifactId>vertx-docgen-processor</artifactId>
+                    <classifier>processor</classifier>
+                  </annotationProcessorPath>
                 </annotationProcessorPaths>
                 <compilerArgs>
                   <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
@@ -119,26 +119,6 @@
       </plugins>
     </pluginManagement>
     <plugins>
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-resources</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/asciidoc/java</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>${asciidoc.dir}</directory>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <executions>
