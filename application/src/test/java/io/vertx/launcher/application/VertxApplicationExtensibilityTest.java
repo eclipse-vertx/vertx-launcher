@@ -27,8 +27,7 @@ import java.util.function.Supplier;
 import static io.vertx.launcher.application.VertxApplicationTest.assertServerStarted;
 import static io.vertx.launcher.application.VertxApplicationTest.getContent;
 import static java.lang.Boolean.TRUE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class VertxApplicationExtensibilityTest {
 
@@ -111,7 +110,8 @@ public class VertxApplicationExtensibilityTest {
 
       @Override
       public VertxBuilder createVertxBuilder(VertxOptions options) {
-        return super.createVertxBuilder(options).withMetrics(o -> new VertxMetrics() {});
+        return super.createVertxBuilder(options).withMetrics(o -> new VertxMetrics() {
+        });
       }
     };
     TestVertxApplication app = new TestVertxApplication(new String[0], hooks);
@@ -139,6 +139,34 @@ public class VertxApplicationExtensibilityTest {
     assertServerStarted();
     assertEquals(TRUE, getContent().getBoolean("clustered"));
     assertSame(clusterManager, ((VertxInternal) hooks.vertx).getClusterManager());
+  }
+
+  @Test
+  public void testExceptionInBeforeStartingVertx() throws Exception {
+    hooks = new TestHooks() {
+      @Override
+      public void beforeStartingVertx(HookContext context) {
+        super.beforeStartingVertx(context);
+        throw new RuntimeException("boom");
+      }
+    };
+    TestVertxApplication app = new TestVertxApplication(new String[]{}, hooks);
+    int exitCode = app.launch();
+    assertNotEquals(0, exitCode);
+  }
+
+  @Test
+  public void testExceptionInAfterVertxStarted() throws Exception {
+    hooks = new TestHooks() {
+      @Override
+      public void afterVertxStarted(HookContext context) {
+        super.afterVertxStarted(context);
+        throw new RuntimeException("boom");
+      }
+    };
+    TestVertxApplication app = new TestVertxApplication(new String[]{}, hooks);
+    int exitCode = app.launch();
+    assertNotEquals(0, exitCode);
   }
 
   private static class TestVertxApplication extends VertxApplication {
