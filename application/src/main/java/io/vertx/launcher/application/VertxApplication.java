@@ -99,13 +99,11 @@ public class VertxApplication {
       .setOptionsCaseInsensitive(true)
       .setExecutionExceptionHandler(new CommandExceptionHandler());
     int exitCode = commandLine.execute(args);
-    if (exitCode == ExitCodes.USAGE) {
-      if (printUsageOnFailure) {
-        CommandLine.usage(command, System.out, Ansi.ON);
-      }
-      if (exitOnFailure) {
-        System.exit(exitCode);
-      }
+    if (exitCode == ExitCodes.USAGE && printUsageOnFailure) {
+      CommandLine.usage(command, System.out, Ansi.ON);
+    }
+    if (exitOnFailure) {
+      System.exit(exitCode);
     }
     return exitCode;
   }
