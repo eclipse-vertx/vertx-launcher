@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023 Contributors to the Eclipse Foundation
+ * Copyright (c) 2011-2025 Contributors to the Eclipse Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -9,17 +9,17 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.launcher.application;
+package io.vertx.launcher.application.tests;
 
-import io.vertx.core.CustomMetricsOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.VertxServiceProvider;
-import io.vertx.test.TestVerticle;
-import io.vertx.test.fakecluster.FakeClusterManager;
+import io.vertx.launcher.application.HookContext;
+import io.vertx.launcher.application.VertxApplication;
+import io.vertx.launcher.application.VertxApplicationHooks;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,7 +78,6 @@ public class VertxApplicationTest {
         .atMost(Duration.ofSeconds(10))
         .until(() -> future.isDone());
     }
-    FakeClusterManager.reset();
   }
 
   private void setManifest(String name) throws Exception {
@@ -234,7 +233,7 @@ public class VertxApplicationTest {
       }
     };
     ClassLoader oldCL = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.core.CustomMetricsFactory"));
+    Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.launcher.application.tests.CustomMetricsFactory"));
     try {
       System.setProperty("vertx.metrics.options.enabled", "true");
       TestVertxApplication app = new TestVertxApplication(new String[0], hooks);
@@ -345,7 +344,7 @@ public class VertxApplicationTest {
     };
 
     ClassLoader oldCL = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.core.CustomMetricsFactory"));
+    Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.launcher.application.tests.CustomMetricsFactory"));
     try {
       System.setProperty("vertx.options.eventLoopPoolSize", "123");
       System.setProperty("vertx.options.maxEventLoopExecuteTime", "123767667");
@@ -393,7 +392,7 @@ public class VertxApplicationTest {
       }
     };
     ClassLoader oldCL = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.core.CustomMetricsFactory"));
+    Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.launcher.application.tests.CustomMetricsFactory"));
     try {
       System.setProperty("vertx.metrics.options.enabled", "true");
       System.setProperty("vertx.metrics.options.customProperty", "customPropertyValue");
