@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023 Contributors to the Eclipse Foundation
+ * Copyright (c) 2011-2025 Contributors to the Eclipse Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -13,7 +13,6 @@ package io.vertx.launcher.application.impl;
 
 import io.vertx.core.*;
 import io.vertx.core.eventbus.EventBusOptions;
-import io.vertx.core.impl.ServiceHelper;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.json.JsonObject;
@@ -30,7 +29,9 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -39,7 +40,6 @@ import java.util.function.Supplier;
 import static io.vertx.launcher.application.impl.Utils.*;
 import static java.lang.Boolean.TRUE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.stream.Collectors.toList;
 import static picocli.CommandLine.Parameters.NULL_VALUE;
 
 @Command(name = "VertxApplication", description = "Runs a Vert.x application.", sortOptions = false)
@@ -279,11 +279,13 @@ public class VertxApplicationCommand implements Runnable {
   }
 
   private <SP> SP findServiceProvider(Class<SP> serviceProviderClass) {
-    List<SP> serviceProviders = ServiceHelper.loadFactories(VertxServiceProvider.class).stream()
-      .filter(vertxServiceProvider -> serviceProviderClass.isAssignableFrom(vertxServiceProvider.getClass()))
-      .map(serviceProviderClass::cast)
-      .collect(toList());
-    if (serviceProviders.size() == 0) {
+    List<SP> serviceProviders = new ArrayList<>();
+    for (VertxServiceProvider vsp : ServiceLoader.load(VertxServiceProvider.class)) {
+      if (serviceProviderClass.isAssignableFrom(vsp.getClass())) {
+        serviceProviders.add(serviceProviderClass.cast(vsp));
+      }
+    }
+    if (serviceProviders.isEmpty()) {
       return null;
     }
     if (serviceProviders.size() != 1) {

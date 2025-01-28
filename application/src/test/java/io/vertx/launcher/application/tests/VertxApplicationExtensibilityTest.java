@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023 Contributors to the Eclipse Foundation
+ * Copyright (c) 2011-2025 Contributors to the Eclipse Foundation
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.launcher.application;
+package io.vertx.launcher.application.tests;
 
 import io.vertx.core.Verticle;
 import io.vertx.core.VertxBuilder;
@@ -17,6 +17,9 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.spi.metrics.VertxMetrics;
+import io.vertx.launcher.application.HookContext;
+import io.vertx.launcher.application.VertxApplication;
+import io.vertx.launcher.application.VertxApplicationHooks;
 import io.vertx.test.fakecluster.FakeClusterManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -24,8 +27,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.function.Supplier;
 
-import static io.vertx.launcher.application.VertxApplicationTest.assertServerStarted;
-import static io.vertx.launcher.application.VertxApplicationTest.getContent;
+import static io.vertx.launcher.application.tests.VertxApplicationTest.assertServerStarted;
+import static io.vertx.launcher.application.tests.VertxApplicationTest.getContent;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,7 +41,6 @@ public class VertxApplicationExtensibilityTest {
     if (hooks != null && hooks.vertx != null) {
       hooks.vertx.close();
     }
-    FakeClusterManager.reset();
   }
 
   @Test
