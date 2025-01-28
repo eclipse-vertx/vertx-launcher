@@ -102,7 +102,7 @@ public class VertxApplication {
     if (exitCode == ExitCodes.USAGE && printUsageOnFailure) {
       CommandLine.usage(command, System.out, Ansi.ON);
     }
-    if (exitOnFailure) {
+    if (exitCode != 0 && exitOnFailure) {
       System.exit(exitCode);
     }
     return exitCode;
