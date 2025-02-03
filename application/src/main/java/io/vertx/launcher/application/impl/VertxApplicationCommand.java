@@ -213,7 +213,7 @@ public class VertxApplicationCommand implements Runnable {
     DeploymentOptions deploymentOptions = createDeploymentOptions();
 
     Supplier<Future<String>> deployer;
-    Supplier<Verticle> verticleSupplier = hooks.verticleSupplier();
+    Supplier<Deployable> verticleSupplier = hooks.verticleSupplier();
     if (verticleSupplier == null) {
       String verticleName = computeVerticleName(vertxApplication.getClass(), mainVerticle);
       if (verticleName == null) {

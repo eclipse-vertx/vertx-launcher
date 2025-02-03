@@ -11,7 +11,7 @@
 
 package io.vertx.launcher.application;
 
-import io.vertx.core.Verticle;
+import io.vertx.core.Deployable;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxBuilder;
 import io.vertx.core.VertxOptions;
@@ -67,12 +67,12 @@ public interface VertxApplicationHooks {
   }
 
   /**
-   * Invoked before deploying the main verticle.
+   * Invoked before deploying the main verticle or {@link Deployable}.
    * <p>
    * If the implementation returns a non-{@code null} supplier, it will be used to create the instance(s) of the verticle,
    * regardless of the value provided on the command line or in the JAR's {@code META-INF/MANIFEST.MF} file.
    */
-  default Supplier<Verticle> verticleSupplier() {
+  default Supplier<Deployable> verticleSupplier() {
     return null;
   }
 
