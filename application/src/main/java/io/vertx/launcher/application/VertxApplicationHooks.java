@@ -72,7 +72,7 @@ public interface VertxApplicationHooks {
    * If the implementation returns a non-{@code null} supplier, it will be used to create the instance(s) of the verticle,
    * regardless of the value provided on the command line or in the JAR's {@code META-INF/MANIFEST.MF} file.
    */
-  default Supplier<Deployable> verticleSupplier() {
+  default Supplier<? extends Deployable> verticleSupplier() {
     return null;
   }
 

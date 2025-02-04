@@ -12,6 +12,7 @@
 package io.vertx.launcher.application.tests;
 
 import io.vertx.core.Deployable;
+import io.vertx.core.Verticle;
 import io.vertx.core.VertxBuilder;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.internal.VertxInternal;
@@ -47,7 +48,7 @@ public class VertxApplicationExtensibilityTest {
   public void testExtendingMainVerticle() {
     hooks = new TestHooks() {
       @Override
-      public Supplier<Deployable> verticleSupplier() {
+      public Supplier<Verticle> verticleSupplier() {
         return () -> new HttpTestVerticle();
       }
     };
@@ -74,7 +75,7 @@ public class VertxApplicationExtensibilityTest {
     long time = System.nanoTime();
     hooks = new TestHooks() {
       @Override
-      public Supplier<Deployable> verticleSupplier() {
+      public Supplier<Verticle> verticleSupplier() {
         return () -> new HttpTestVerticle();
       }
 
@@ -94,7 +95,7 @@ public class VertxApplicationExtensibilityTest {
     long time = System.nanoTime();
     hooks = new TestHooks() {
       @Override
-      public Supplier<Deployable> verticleSupplier() {
+      public Supplier<Verticle> verticleSupplier() {
         return () -> new HttpTestVerticle();
       }
 
@@ -113,7 +114,7 @@ public class VertxApplicationExtensibilityTest {
   public void testThatCustomLauncherCanCustomizeMetricsOption() throws Exception {
     hooks = new TestHooks() {
       @Override
-      public Supplier<Deployable> verticleSupplier() {
+      public Supplier<Verticle> verticleSupplier() {
         return () -> new HttpTestVerticle();
       }
 
@@ -140,7 +141,7 @@ public class VertxApplicationExtensibilityTest {
     FakeClusterManager clusterManager = new FakeClusterManager();
     hooks = new TestHooks() {
       @Override
-      public Supplier<Deployable> verticleSupplier() {
+      public Supplier<Verticle> verticleSupplier() {
         return () -> new HttpTestVerticle();
       }
 
