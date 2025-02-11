@@ -13,10 +13,10 @@ package io.vertx.core.impl.launcher.commands;
 
 import io.vertx.core.*;
 import io.vertx.core.cli.annotations.*;
-import io.vertx.core.eventbus.AddressHelper;
 import io.vertx.core.eventbus.EventBusOptions;
-import io.vertx.core.impl.launcher.VertxLifecycleHooks;
+import io.vertx.core.eventbus.impl.clustered.ClusteredEventBus;
 import io.vertx.core.impl.ServiceHelper;
+import io.vertx.core.impl.launcher.VertxLifecycleHooks;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
@@ -545,7 +545,7 @@ public class BareCommand extends ClasspathHandler {
    */
   @Deprecated
   protected String getDefaultAddress() {
-    return AddressHelper.defaultAddress();
+    return ClusteredEventBus.defaultAddress();
   }
 
 

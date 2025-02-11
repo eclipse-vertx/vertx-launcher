@@ -19,7 +19,6 @@ import io.vertx.core.spi.VertxServiceProvider;
 import io.vertx.test.TestVerticle;
 import io.vertx.test.core.TestUtils;
 import io.vertx.test.core.VertxTestBase;
-import io.vertx.tests.metrics.MetricsOptionsTest;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -42,7 +41,7 @@ public class LauncherTest extends VertxTestBase {
   private String expectedVersion;
   private ByteArrayOutputStream out;
   private PrintStream stream;
-  private Vertx vertx;
+  private volatile Vertx vertx;
 
   @Override
   public void setUp() throws Exception {
@@ -176,22 +175,10 @@ public class LauncherTest extends VertxTestBase {
     File target = new File("target/test-classes/META-INF/MANIFEST.MF");
     Files.copy(manifest.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-    Launcher launcher = new Launcher();
+    CapturingVertxLauncher launcher = new CapturingVertxLauncher();
     String[] args = new String[0];
     launcher.dispatch(args);
     assertWaitUntil(() -> TestVerticle.instanceCount.get() == 1);
-
-    cleanup(launcher);
-  }
-
-  private void cleanup(Launcher launcher) {
-    RunCommand run = (RunCommand) launcher.getExistingCommandInstance("run");
-    if (run != null) {
-      Vertx v = run.vertx();
-      if (v != null) {
-        v.close();
-      }
-    }
   }
 
   @Test
@@ -204,12 +191,10 @@ public class LauncherTest extends VertxTestBase {
     File target = new File("target/test-classes/META-INF/MANIFEST.MF");
     Files.copy(manifest.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-    Launcher launcher = new Launcher();
+    CapturingVertxLauncher launcher = new CapturingVertxLauncher();
     String[] args = {"-cluster", "-worker", "-instances=10"};
     launcher.dispatch(args);
     assertWaitUntil(() -> TestVerticle.instanceCount.get() == 10);
-
-    cleanup(launcher);
   }
 
   @Test
@@ -222,7 +207,7 @@ public class LauncherTest extends VertxTestBase {
     File target = new File("target/test-classes/META-INF/MANIFEST.MF");
     Files.copy(manifest.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-    Launcher launcher = new Launcher();
+    CapturingVertxLauncher launcher = new CapturingVertxLauncher();
     HelloCommand.called = false;
     String[] args = {"--name=vert.x"};
     launcher.dispatch(args);
@@ -258,11 +243,9 @@ public class LauncherTest extends VertxTestBase {
 
     HelloCommand.called = false;
     String[] args = {"run", TestVerticle.class.getName(), "--name=vert.x"};
-    Launcher launcher = new Launcher();
+    CapturingVertxLauncher launcher = new CapturingVertxLauncher();
     launcher.dispatch(args);
     assertWaitUntil(() -> TestVerticle.instanceCount.get() == 1);
-
-    cleanup(launcher);
   }
 
   @Test
@@ -276,11 +259,9 @@ public class LauncherTest extends VertxTestBase {
     Files.copy(manifest.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
     String[] args = {TestVerticle.class.getName()};
-    Launcher launcher = new Launcher();
+    CapturingVertxLauncher launcher = new CapturingVertxLauncher();
     launcher.dispatch(args);
     assertWaitUntil(() -> TestVerticle.instanceCount.get() == 1);
-
-    cleanup(launcher);
   }
 
 
@@ -310,7 +291,7 @@ public class LauncherTest extends VertxTestBase {
     File target = new File("target/test-classes/META-INF/MANIFEST.MF");
     Files.copy(manifest.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-    Launcher launcher = new Launcher() {
+    CapturingVertxLauncher launcher = new CapturingVertxLauncher() {
       @Override
       public PrintStream getPrintStream() {
         return stream;
@@ -335,7 +316,7 @@ public class LauncherTest extends VertxTestBase {
     File target = new File("target/test-classes/META-INF/MANIFEST.MF");
     Files.copy(manifest.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-    Launcher launcher = new Launcher() {
+    CapturingVertxLauncher launcher = new CapturingVertxLauncher() {
       @Override
       public PrintStream getPrintStream() {
         return stream;
@@ -358,7 +339,7 @@ public class LauncherTest extends VertxTestBase {
     File target = new File("target/test-classes/META-INF/MANIFEST.MF");
     Files.copy(manifest.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-    Launcher launcher = new Launcher() {
+    CapturingVertxLauncher launcher = new CapturingVertxLauncher() {
       @Override
       public PrintStream getPrintStream() {
         return stream;
@@ -716,7 +697,14 @@ public class LauncherTest extends VertxTestBase {
     assertEquals(newClusterPublicPort, launcher.options.getEventBusOptions().getClusterPublicPort());
   }
 
-  class MyLauncher extends Launcher {
+  public class CapturingVertxLauncher extends Launcher {
+    @Override
+    public void afterStartingVertx(Vertx vertx) {
+      LauncherTest.this.vertx = vertx;
+    }
+  }
+
+  class MyLauncher extends CapturingVertxLauncher {
     boolean afterConfigParsed = false;
     boolean beforeStartingVertxInvoked = false;
     boolean afterStartingVertxInvoked = false;
@@ -770,8 +758,8 @@ public class LauncherTest extends VertxTestBase {
 
     @Override
     public void afterStartingVertx(Vertx vertx) {
+      super.afterStartingVertx(vertx);
       afterStartingVertxInvoked = true;
-      LauncherTest.this.vertx = vertx;
     }
 
     @Override
