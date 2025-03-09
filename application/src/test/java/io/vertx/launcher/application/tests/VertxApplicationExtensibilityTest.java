@@ -154,7 +154,7 @@ public class VertxApplicationExtensibilityTest {
     app.launch();
     assertServerStarted();
     assertEquals(TRUE, getContent().getBoolean("clustered"));
-    assertSame(clusterManager, ((VertxInternal) hooks.vertx).getClusterManager());
+    assertSame(clusterManager, ((VertxInternal) hooks.vertx).clusterManager());
   }
 
   @Test

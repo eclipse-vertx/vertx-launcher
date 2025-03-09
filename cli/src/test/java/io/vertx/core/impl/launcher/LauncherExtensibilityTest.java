@@ -239,7 +239,7 @@ public class LauncherExtensibilityTest extends CommandTestBase {
     });
 
     assertThat(RunCommandTest.getContent().getBoolean("clustered")).isEqualTo(true);
-    assertSame(clusterManager, ((VertxInternal) vertx).getClusterManager());
+    assertSame(clusterManager, ((VertxInternal) vertx).clusterManager());
   }
 
   @Name("foo")
