@@ -223,6 +223,24 @@ public class VertxApplicationTest {
   }
 
   @Test
+  public void testWithConfProvidedModifiedInHook() throws Exception {
+    setManifest("META-INF/MANIFEST-Http-Verticle.MF");
+    URI resource = getClass().getClassLoader().getResource("verticle-conf.json").toURI();
+    assertEquals("file", resource.getScheme());
+    Path source = Paths.get(resource);
+    hooks = new TestHooks() {
+      @Override
+      public JsonObject afterConfigParsed(JsonObject config) {
+        return config.put("name", "Billy Bob");
+      }
+    };
+    TestVertxApplication app = new TestVertxApplication(new String[]{"--conf", source.toString()}, hooks);
+    app.launch();
+    assertServerStarted();
+    assertEquals("Billy Bob", getContent().getJsonObject("conf").getString("name"));
+  }
+
+  @Test
   public void testMetricsEnabledFromCommandLine() throws Exception {
     setManifest("META-INF/MANIFEST-Http-Verticle.MF");
     AtomicReference<MetricsOptions> metricsOptions = new AtomicReference<>();
@@ -280,7 +298,7 @@ public class VertxApplicationTest {
 
   private void testConfigureFromJson(boolean jsonFile) throws Exception {
     JsonObject json = new JsonObject()
-      .put("eventLoopPoolSize", 123)
+      .put("eventLoopPoolSize", 1)
       .put("maxEventLoopExecuteTime", 123767667)
       .put("metricsOptions", new JsonObject().put("enabled", true))
       .put("eventBusOptions", new JsonObject().put("clusterPublicHost", "mars"))
@@ -297,6 +315,12 @@ public class VertxApplicationTest {
 
     AtomicReference<VertxOptions> vertxOptions = new AtomicReference<>();
     hooks = new TestHooks() {
+      @Override
+      public JsonObject afterVertxOptionsParsed(JsonObject vertxOptions) {
+        // This verifies options can be modified after parsing
+        return vertxOptions.put("eventLoopPoolSize", 123);
+      }
+
       @Override
       public void beforeStartingVertx(HookContext context) {
         vertxOptions.set(context.vertxOptions());

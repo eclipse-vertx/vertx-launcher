@@ -191,15 +191,18 @@ public class VertxApplicationCommand implements Runnable {
 
   @Override
   public void run() {
-    JsonObject optionsJson = readJsonFileOrString(log, "options", vertxOptionsStr);
+    JsonObject optionsParam = hooks.afterVertxOptionsParsed(readJsonFileOrString(log, "options", vertxOptionsStr));
+    JsonObject deploymentOptionsParam = hooks.afterDeploymentOptionsParsed(readJsonFileOrString(log, "deploymentOptions", deploymentOptionsStr));
+    JsonObject conf = hooks.afterConfigParsed(readJsonFileOrString(log, "conf", configStr));
+
     VertxOptions options;
-    if (optionsJson != null) {
-      options = new VertxOptions(optionsJson);
+    if (optionsParam != null) {
+      options = new VertxOptions(optionsParam);
     } else {
       options = new VertxOptions();
     }
     VertxBuilder builder = hooks.createVertxBuilder(options);
-    processVertxOptions(options, optionsJson);
+    processVertxOptions(options, optionsParam);
 
     hookContext.setVertxOptions(options);
     hooks.beforeStartingVertx(hookContext);
@@ -210,7 +213,7 @@ public class VertxApplicationCommand implements Runnable {
     vertx.addCloseHook(this::beforeStoppingVertx);
     Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(vertx, this::afterShutdownHookExecuted)));
 
-    DeploymentOptions deploymentOptions = createDeploymentOptions();
+    DeploymentOptions deploymentOptions = createDeploymentOptions(deploymentOptionsParam, conf);
 
     Supplier<Future<String>> deployer;
     Supplier<? extends Deployable> verticleSupplier = hooks.verticleSupplier();
@@ -295,9 +298,8 @@ public class VertxApplicationCommand implements Runnable {
     return serviceProviders.get(0);
   }
 
-  private DeploymentOptions createDeploymentOptions() {
-    JsonObject deploymentOptionsJson = readJsonFileOrString(log, "deploymentOptions", deploymentOptionsStr);
-    DeploymentOptions deploymentOptions = deploymentOptionsJson != null ? new DeploymentOptions(deploymentOptionsJson) : new DeploymentOptions();
+  private DeploymentOptions createDeploymentOptions(JsonObject deploymentOptionsParam, JsonObject confParam) {
+    DeploymentOptions deploymentOptions = deploymentOptionsParam != null ? new DeploymentOptions(deploymentOptionsParam) : new DeploymentOptions();
     if (worker == TRUE) {
       if (virtualThread == TRUE) {
         log.error("Cannot choose the threading model, the virtual thread and worker options are both set.");
@@ -310,11 +312,11 @@ public class VertxApplicationCommand implements Runnable {
     if (instances != null) {
       deploymentOptions.setInstances(instances);
     }
-    JsonObject conf = readJsonFileOrString(log, "conf", configStr);
-    if (conf == null) {
-      conf = new JsonObject();
+    if (confParam != null) {
+      deploymentOptions.setConfig(confParam);
+    } else {
+      deploymentOptions.setConfig(new JsonObject());
     }
-    deploymentOptions.setConfig(conf);
     configureFromSystemProperties(log, deploymentOptions, DEPLOYMENT_OPTIONS_PROP_PREFIX);
     return deploymentOptions;
   }
