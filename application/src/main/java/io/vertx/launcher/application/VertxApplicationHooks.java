@@ -11,10 +11,8 @@
 
 package io.vertx.launcher.application;
 
-import io.vertx.core.Deployable;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxBuilder;
-import io.vertx.core.VertxOptions;
+import io.vertx.core.*;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.spi.VertxTracerFactory;
 
 import java.util.function.Supplier;
@@ -26,6 +24,36 @@ public interface VertxApplicationHooks {
 
   VertxApplicationHooks DEFAULT = new VertxApplicationHooks() {
   };
+
+  /**
+   * Invoked after parsing the {@code options} parameter. The content can be modified or replaced.
+   *
+   * @param vertxOptions the parsed JSON representation of {@link VertxOptions}
+   * @return the JSON value to use
+   */
+  default JsonObject afterVertxOptionsParsed(JsonObject vertxOptions) {
+    return vertxOptions;
+  }
+
+  /**
+   * Invoked after parsing the {@code deployment-options} parameter. The content can be modified or replaced.
+   *
+   * @param deploymentOptions the parsed JSON representation of {@link DeploymentOptions}
+   * @return the JSON value to use
+   */
+  default JsonObject afterDeploymentOptionsParsed(JsonObject deploymentOptions) {
+    return deploymentOptions;
+  }
+
+  /**
+   * Invoked after parsing the {@code conf} parameter. The content can be modified or replaced.
+   *
+   * @param config the parsed JSON representation of {@link DeploymentOptions#getConfig()}
+   * @return the JSON value to use
+   */
+  default JsonObject afterConfigParsed(JsonObject config) {
+    return config;
+  }
 
   /**
    * Invoked before starting Vert.x.
