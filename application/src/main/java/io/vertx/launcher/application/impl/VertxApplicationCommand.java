@@ -361,10 +361,10 @@ public class VertxApplicationCommand implements Runnable {
     }
   }
 
-  private void beforeStoppingVertx(Promise<Void> promise) {
+  private void beforeStoppingVertx(Completable<Void> promise) {
     try {
       hooks.beforeStoppingVertx(hookContext);
-      promise.complete();
+      promise.succeed();
     } catch (Exception e) {
       promise.fail(e);
     }

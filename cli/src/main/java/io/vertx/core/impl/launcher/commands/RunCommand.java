@@ -443,10 +443,10 @@ public class RunCommand extends BareCommand implements Closeable {
   }
 
   @Override
-  public void close(Promise<Void> completion) {
+  public void close(Completable<Void> completion) {
     try {
       beforeStoppingVertx(vertx);
-      completion.complete();
+      completion.succeed();
     } catch (Exception e) {
       completion.fail(e);
     }
