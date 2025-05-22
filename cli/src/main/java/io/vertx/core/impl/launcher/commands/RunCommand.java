@@ -15,8 +15,8 @@ import io.vertx.core.*;
 import io.vertx.core.cli.CLIException;
 import io.vertx.core.cli.CommandLine;
 import io.vertx.core.cli.annotations.*;
-import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.impl.launcher.VertxLifecycleHooks;
+import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.spi.launcher.ExecutionContext;
 
@@ -254,8 +254,16 @@ public class RunCommand extends BareCommand implements Closeable {
       }
 
       deploymentOptions = new DeploymentOptions();
-      configureFromSystemProperties(deploymentOptions, DEPLOYMENT_OPTIONS_PROP_PREFIX);
-      deploymentOptions.setConfig(conf).setThreadingModel(worker ? ThreadingModel.WORKER : ThreadingModel.EVENT_LOOP).setHa(ha).setInstances(instances);
+      configureFromSystemProperties.set(log);
+      try {
+        configureFromSystemProperties(deploymentOptions, DEPLOYMENT_OPTIONS_PROP_PREFIX);
+      } finally {
+        configureFromSystemProperties.set(null);
+      }
+      deploymentOptions.setConfig(conf).setHa(ha).setInstances(instances);
+      if (worker) {
+        deploymentOptions.setThreadingModel(ThreadingModel.WORKER);
+      }
       beforeDeployingVerticle(deploymentOptions);
       deploy();
     } else {
