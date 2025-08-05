@@ -18,7 +18,7 @@
   <parent>
     <groupId>io.vertx</groupId>
     <artifactId>vertx-launcher-parent</artifactId>
-    <version>5.0.2</version>
+    <version>5.0.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>vertx-launcher-application</artifactId>
