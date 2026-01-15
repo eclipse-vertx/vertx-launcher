@@ -19,7 +19,7 @@
   </parent>
 
   <artifactId>vertx-launcher-parent</artifactId>
-  <version>5.0.7-SNAPSHOT</version>
+  <version>5.0.7</version>
   <packaging>pom</packaging>
 
   <name>Vert.x Launcher parent</name>
