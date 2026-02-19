@@ -61,8 +61,8 @@ public class Utils {
     }
   }
 
-  public static void configureFromEnvVars(Logger log, Object options, String prefix, Map<String, String> env) {
-    for (Map.Entry<String, String> entry : env.entrySet()) {
+  public static void configureFromEnvVars(Logger log, Object options, String prefix) {
+    for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
       String envName = entry.getKey();
       if (envName.startsWith(prefix)) {
         String fieldName = envName.substring(prefix.length()).replace("_", "").toLowerCase();

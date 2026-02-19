@@ -51,6 +51,7 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
 
 public class VertxApplicationTest {
 
@@ -407,16 +408,16 @@ public class VertxApplicationTest {
   }
 
   @Test
-  public void testConfigureFromEnvVars() {
+  public void testConfigureFromEnvVars() throws Exception {
     testConfigureFromEnvVars(false);
   }
 
   @Test
-  public void testConfigureFromEnvVarsClustered() {
+  public void testConfigureFromEnvVarsClustered() throws Exception {
     testConfigureFromEnvVars(true);
   }
 
-  private void testConfigureFromEnvVars(boolean clustered) {
+  private void testConfigureFromEnvVars(boolean clustered) throws Exception {
     String[] args;
 
     if (clustered) {
@@ -425,23 +426,12 @@ public class VertxApplicationTest {
       args = new String[]{"java:" + TestVerticle.class.getCanonicalName()};
     }
 
-    Map<String, String> env = new HashMap<>(System.getenv());
     AtomicReference<VertxOptions> vertxOptions = new AtomicReference<>();
-
-    env.put("VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE", "42");
-    env.put("VERTX_OPTIONS_MAX_EVENT_LOOP_EXECUTE_TIME", "123767667");
-    env.put("VERTX_OPTIONS_MAX_EVENT_LOOP_EXECUTE_TIME_UNIT", "SECONDS");
-    env.put("VERTX_METRICS_OPTIONS_ENABLED", "true");
 
     hooks = new TestHooks() {
       @Override
       public void beforeStartingVertx(HookContext context) {
         vertxOptions.set(context.vertxOptions());
-      }
-
-      @Override
-      public Map<String, String> getEnvironmentVariables() {
-        return env;
       }
     };
 
@@ -449,8 +439,15 @@ public class VertxApplicationTest {
     Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.launcher.application.tests.CustomMetricsFactory"));
 
     try {
-      TestVertxApplication app = new TestVertxApplication(args, hooks);
-      app.launch();
+      withEnvironmentVariables(
+        "VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE", "42",
+        "VERTX_OPTIONS_MAX_EVENT_LOOP_EXECUTE_TIME", "123767667",
+        "VERTX_OPTIONS_MAX_EVENT_LOOP_EXECUTE_TIME_UNIT", "SECONDS",
+        "VERTX_METRICS_OPTIONS_ENABLED", "true"
+      ).execute(() -> {
+        TestVertxApplication app = new TestVertxApplication(args, hooks);
+        app.launch();
+      });
     } finally {
       Thread.currentThread().setContextClassLoader(oldCL);
     }
@@ -468,31 +465,26 @@ public class VertxApplicationTest {
   }
 
   @Test
-  public void testSystemPropertiesOverrideEnvVars() {
-    Map<String, String> env = new HashMap<>(System.getenv());
+  public void testSystemPropertiesOverrideEnvVars() throws Exception {
     AtomicReference<VertxOptions> vertxOptions = new AtomicReference<>();
-
-    env.put("VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE", "5");
 
     hooks = new TestHooks() {
       @Override
       public void beforeStartingVertx(HookContext context) {
         vertxOptions.set(context.vertxOptions());
       }
-
-      @Override
-      public Map<String, String> getEnvironmentVariables() {
-        return env;
-      }
     };
 
-    try {
-      System.setProperty("vertx.options.eventLoopPoolSize", "99");
-      TestVertxApplication app = new TestVertxApplication(new String[]{"java:" + TestVerticle.class.getCanonicalName()}, hooks);
-      app.launch();
-    } finally {
-      clearProperties();
-    }
+    withEnvironmentVariables("VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE", "5")
+      .execute(() -> {
+        try {
+          System.setProperty("vertx.options.eventLoopPoolSize", "99");
+          TestVertxApplication app = new TestVertxApplication(new String[]{"java:" + TestVerticle.class.getCanonicalName()}, hooks);
+          app.launch();
+        } finally {
+          clearProperties();
+        }
+      });
 
     await("Server not started")
       .atMost(Duration.ofSeconds(10))
@@ -502,22 +494,17 @@ public class VertxApplicationTest {
   }
 
   @Test
-  public void testCliArgumentsOverrideEnvVars() {
-    Map<String, String> env = new HashMap<>(System.getenv());
-    env.put("VERTX_DEPLOYMENT_OPTIONS_INSTANCES", "2");
+  public void testCliArgumentsOverrideEnvVars() throws Exception {
+    hooks = new TestHooks();
 
-    hooks = new TestHooks() {
-      @Override
-      public Map<String, String> getEnvironmentVariables() {
-        return env;
-      }
-    };
-
-    TestVertxApplication app = new TestVertxApplication(
-      new String[]{"java:" + TestVerticle.class.getCanonicalName(), "-instances", "5"},
-      hooks
-    );
-    app.launch();
+    withEnvironmentVariables("VERTX_DEPLOYMENT_OPTIONS_INSTANCES", "2")
+      .execute(() -> {
+        TestVertxApplication app = new TestVertxApplication(
+          new String[]{"java:" + TestVerticle.class.getCanonicalName(), "-instances", "5"},
+          hooks
+        );
+        app.launch();
+      });
 
     await("Server not started")
       .atMost(Duration.ofSeconds(10))

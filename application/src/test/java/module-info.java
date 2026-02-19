@@ -14,6 +14,7 @@ open module io.vertx.launcher.application.tests {
   requires io.vertx.launcher.application;
 
   requires org.hamcrest;
+  requires system.stubs.core;
   requires org.junit.jupiter.api;
 
   // Only required for compilation

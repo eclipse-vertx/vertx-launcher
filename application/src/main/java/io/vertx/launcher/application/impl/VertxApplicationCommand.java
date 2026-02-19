@@ -31,7 +31,6 @@ import picocli.CommandLine.Parameters;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -197,7 +196,6 @@ public class VertxApplicationCommand implements Runnable {
 
   @Override
   public void run() {
-    Map<String, String> environmentVariables = hooks.getEnvironmentVariables();
     JsonObject optionsParam = hooks.afterVertxOptionsParsed(readJsonFileOrString(log, "options", vertxOptionsStr));
     JsonObject deploymentOptionsParam = hooks.afterDeploymentOptionsParsed(readJsonFileOrString(log, "deploymentOptions", deploymentOptionsStr));
     JsonObject conf = hooks.afterConfigParsed(readJsonFileOrString(log, "conf", configStr));
@@ -209,7 +207,7 @@ public class VertxApplicationCommand implements Runnable {
       options = new VertxOptions();
     }
     VertxBuilder builder = hooks.createVertxBuilder(options);
-    processVertxOptions(options, optionsParam, environmentVariables);
+    processVertxOptions(options, optionsParam);
 
     hookContext.setVertxOptions(options);
     hooks.beforeStartingVertx(hookContext);
@@ -220,7 +218,7 @@ public class VertxApplicationCommand implements Runnable {
     vertx.addCloseHook(this::beforeStoppingVertx);
     Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(vertx, this::afterShutdownHookExecuted)));
 
-    DeploymentOptions deploymentOptions = createDeploymentOptions(deploymentOptionsParam, conf, environmentVariables);
+    DeploymentOptions deploymentOptions = createDeploymentOptions(deploymentOptionsParam, conf);
 
     Supplier<Future<String>> deployer;
     Supplier<? extends Deployable> verticleSupplier = hooks.verticleSupplier();
@@ -245,10 +243,10 @@ public class VertxApplicationCommand implements Runnable {
     hooks.afterVerticleDeployed(hookContext);
   }
 
-  private void processVertxOptions(VertxOptions vertxOptions, JsonObject optionsJson, Map<String, String> env) {
+  private void processVertxOptions(VertxOptions vertxOptions, JsonObject optionsJson) {
     if (clustered == TRUE) {
       EventBusOptions eventBusOptions = vertxOptions.getEventBusOptions();
-      configureFromEnvVars(log, eventBusOptions, VERTX_EVENTBUS_OPTIONS_ENV_PREFIX, env);
+      configureFromEnvVars(log, eventBusOptions, VERTX_EVENTBUS_OPTIONS_ENV_PREFIX);
       if (clusterHost != null) {
         eventBusOptions.setHost(clusterHost);
       }
@@ -263,7 +261,7 @@ public class VertxApplicationCommand implements Runnable {
       }
       configureFromSystemProperties(log, eventBusOptions, VERTX_EVENTBUS_PROP_PREFIX);
     }
-    configureFromEnvVars(log, vertxOptions, VERTX_OPTIONS_ENV_PREFIX, env);
+    configureFromEnvVars(log, vertxOptions, VERTX_OPTIONS_ENV_PREFIX);
     configureFromSystemProperties(log, vertxOptions, VERTX_OPTIONS_PROP_PREFIX);
     VertxMetricsFactory metricsFactory = findServiceProvider(VertxMetricsFactory.class);
     if (metricsFactory != null) {
@@ -278,7 +276,7 @@ public class VertxApplicationCommand implements Runnable {
           metricsOptions = metricsFactory.newOptions(metricsOptions);
         }
       }
-      configureFromEnvVars(log, metricsOptions, METRICS_OPTIONS_ENV_PREFIX, env);
+      configureFromEnvVars(log, metricsOptions, METRICS_OPTIONS_ENV_PREFIX);
       configureFromSystemProperties(log, metricsOptions, METRICS_OPTIONS_PROP_PREFIX);
       vertxOptions.setMetricsOptions(metricsOptions);
     }
@@ -308,9 +306,9 @@ public class VertxApplicationCommand implements Runnable {
     return serviceProviders.get(0);
   }
 
-  private DeploymentOptions createDeploymentOptions(JsonObject deploymentOptionsParam, JsonObject confParam, Map<String, String> env) {
+  private DeploymentOptions createDeploymentOptions(JsonObject deploymentOptionsParam, JsonObject confParam) {
     DeploymentOptions deploymentOptions = deploymentOptionsParam != null ? new DeploymentOptions(deploymentOptionsParam) : new DeploymentOptions();
-    configureFromEnvVars(log, deploymentOptions, DEPLOYMENT_OPTIONS_ENV_PREFIX, env);
+    configureFromEnvVars(log, deploymentOptions, DEPLOYMENT_OPTIONS_ENV_PREFIX);
     if (worker == TRUE) {
       if (virtualThread == TRUE) {
         log.error("Cannot choose the threading model, the virtual thread and worker options are both set.");

@@ -15,7 +15,6 @@ import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.spi.VertxTracerFactory;
 
-import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -25,17 +24,6 @@ public interface VertxApplicationHooks {
 
   VertxApplicationHooks DEFAULT = new VertxApplicationHooks() {
   };
-
-  /**
-   * Returns the environment variables to use when configuring options.
-   * <p>
-   * By default, returns {@link System#getenv()}. Override to supply a custom set of environment variables.
-   *
-   * @return the map of environment variable names to their values
-   */
-  default Map<String, String> getEnvironmentVariables() {
-    return System.getenv();
-  }
 
   /**
    * Invoked after parsing the {@code options} parameter. The content can be modified or replaced.

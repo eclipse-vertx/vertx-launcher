@@ -171,15 +171,6 @@ For example, `VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE` maps to `setEventLoopPoolSize`
 
 `String`, `int`, `long`, `boolean`, and any `enum`.
 
-==== Customizing the environment
-
-To control which environment variables the launcher sees, override the `getEnvironmentVariables` hook:
-
-[source,$lang]
-----
-{@link examples.Examples#customEnvironment}
-----
-
 === System properties
 
 Vert.x options can be configured via system properties passed with `-D` on the JVM command line.
