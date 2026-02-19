@@ -74,7 +74,11 @@ Main-Class: io.vertx.launcher.application.VertxApplication
 Main-Verticle: my.app.MainVerticle
 ----
 
-=== Options
+== Configuration
+
+The Vert.x Application Launcher can be configured in multiple ways: CLI options, environment variables, and system properties.
+
+=== CLI options
 
 In addition to the main verticle parameter, the {@link io.vertx.launcher.application.VertxApplication} main class accepts several options.
 
@@ -131,6 +135,94 @@ It should reference either a JSON file which represents the options OR be a JSON
 
 *-h*, *-help, --help*::
 Display a help message.
+
+=== Environment variables
+
+Vert.x options can be configured via environment variables. This is useful when running in containers like Docker or Kubernetes where you don't want to pass long command-line flags.
+
+==== Prefixes
+
+Each options class has its own prefix:
+
+[cols="1,2",options="header"]
+|===
+|Prefix|Applies to
+
+|`VERTX_OPTIONS_`
+|{@link io.vertx.core.VertxOptions}
+
+|`VERTX_EVENTBUS_OPTIONS_`
+|{@link io.vertx.core.eventbus.EventBusOptions} (clustered mode only)
+
+|`VERTX_DEPLOYMENT_OPTIONS_`
+|{@link io.vertx.core.DeploymentOptions}
+
+|`VERTX_METRICS_OPTIONS_`
+|{@link io.vertx.core.metrics.MetricsOptions} (when a metrics provider is present)
+|===
+
+==== Name conversion
+
+The field name is derived from the variable name by stripping the prefix, removing underscores, and lowercasing. The result is matched case-insensitively against the setter methods of the options class.
+
+For example, `VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE` maps to `setEventLoopPoolSize` on `VertxOptions`.
+
+==== Supported value types
+
+`String`, `int`, `long`, `boolean`, and any `enum`.
+
+==== Customizing the environment
+
+To control which environment variables the launcher sees, override the `getEnvironmentVariables` hook:
+
+[source,$lang]
+----
+{@link examples.Examples#customEnvironment}
+----
+
+=== System properties
+
+Vert.x options can be configured via system properties passed with `-D` on the JVM command line.
+
+==== Prefixes
+
+[cols="1,2",options="header"]
+|===
+|Prefix|Applies to
+
+|`vertx.options.`
+|{@link io.vertx.core.VertxOptions}
+
+|`vertx.eventBus.options.`
+|{@link io.vertx.core.eventbus.EventBusOptions} (clustered mode only)
+
+|`vertx.deployment.options.`
+|{@link io.vertx.core.DeploymentOptions}
+
+|`vertx.metrics.options.`
+|{@link io.vertx.core.metrics.MetricsOptions} (when a metrics provider is present)
+|===
+
+==== Name conversion
+
+The suffix after the prefix maps directly to the setter name, matched case-insensitively.
+
+For example, `-Dvertx.options.eventLoopPoolSize=8` maps to `setEventLoopPoolSize` on `VertxOptions`.
+
+==== Supported value types
+
+`String`, `int`, `long`, `boolean`, and any `enum`.
+
+=== Order of precedence
+
+Options are applied in this order, where later entries win:
+
+1. JSON options (via `-options` / `-deployment-options`)
+2. Environment variables
+3. CLI arguments (e.g. `--cluster-host`, `--instances`, `--worker`)
+4. System properties (via `-D`)
+
+For example, if `VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE=5` is set but `-Dvertx.options.eventLoopPoolSize=10` is also passed, the event loop pool size will be `10`.
 
 == Extensibility
 

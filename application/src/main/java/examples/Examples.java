@@ -16,6 +16,9 @@ import io.vertx.launcher.application.HookContext;
 import io.vertx.launcher.application.VertxApplication;
 import io.vertx.launcher.application.VertxApplicationHooks;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @SuppressWarnings("unused")
 public class Examples {
 
@@ -30,6 +33,19 @@ public class Examples {
       @Override
       public void afterVerticleDeployed(HookContext context) {
         System.out.println("Hooray!");
+      }
+    };
+    VertxApplication app = new VertxApplication(args, hooks);
+    app.launch();
+  }
+
+  public void customEnvironment(String[] args) {
+    VertxApplicationHooks hooks = new VertxApplicationHooks() {
+      @Override
+      public Map<String, String> getEnvironmentVariables() {
+        Map<String, String> env = new HashMap<>(System.getenv());
+        env.put("VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE", "8");
+        return env;
       }
     };
     VertxApplication app = new VertxApplication(args, hooks);

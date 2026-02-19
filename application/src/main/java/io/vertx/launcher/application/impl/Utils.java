@@ -54,41 +54,54 @@ public class Utils {
     Enumeration<?> e = props.propertyNames();
     while (e.hasMoreElements()) {
       String propName = (String) e.nextElement();
-      String propVal = props.getProperty(propName);
       if (propName.startsWith(prefix)) {
         String fieldName = propName.substring(prefix.length());
-        Method setter = getSetter(fieldName, options.getClass());
-        if (setter == null) {
-          log.warn("No such property to configure on options: " + options.getClass().getName() + "." + fieldName);
-          continue;
-        }
-        Class<?> argType = setter.getParameterTypes()[0];
-        Object arg;
-        try {
-          if (argType.equals(String.class)) {
-            arg = propVal;
-          } else if (argType.equals(int.class)) {
-            arg = Integer.valueOf(propVal);
-          } else if (argType.equals(long.class)) {
-            arg = Long.valueOf(propVal);
-          } else if (argType.equals(boolean.class)) {
-            arg = Boolean.valueOf(propVal);
-          } else if (argType.isEnum()) {
-            arg = Enum.valueOf((Class<? extends Enum>) argType, propVal);
-          } else {
-            log.warn("Invalid type for setter: " + argType);
-            continue;
-          }
-        } catch (IllegalArgumentException e2) {
-          log.warn("Invalid argtype:" + argType + " on options: " + options.getClass().getName() + "." + fieldName);
-          continue;
-        }
-        try {
-          setter.invoke(options, arg);
-        } catch (Exception ex) {
-          throw new VertxException("Failed to invoke setter: " + setter, ex);
-        }
+        configureOption(log, options, fieldName, props.getProperty(propName));
       }
+    }
+  }
+
+  public static void configureFromEnvVars(Logger log, Object options, String prefix, Map<String, String> env) {
+    for (Map.Entry<String, String> entry : env.entrySet()) {
+      String envName = entry.getKey();
+      if (envName.startsWith(prefix)) {
+        String fieldName = envName.substring(prefix.length()).replace("_", "").toLowerCase();
+        configureOption(log, options, fieldName, entry.getValue());
+      }
+    }
+  }
+
+  private static void configureOption(Logger log, Object options, String fieldName, String value) {
+    Method setter = getSetter(fieldName, options.getClass());
+    if (setter == null) {
+      log.warn("No such property to configure on options: " + options.getClass().getName() + "." + fieldName);
+      return;
+    }
+    Class<?> argType = setter.getParameterTypes()[0];
+    Object arg;
+    try {
+      if (argType.equals(String.class)) {
+        arg = value;
+      } else if (argType.equals(int.class)) {
+        arg = Integer.valueOf(value);
+      } else if (argType.equals(long.class)) {
+        arg = Long.valueOf(value);
+      } else if (argType.equals(boolean.class)) {
+        arg = Boolean.valueOf(value);
+      } else if (argType.isEnum()) {
+        arg = Enum.valueOf((Class<? extends Enum>) argType, value);
+      } else {
+        log.warn("Invalid type for setter: " + argType);
+        return;
+      }
+    } catch (IllegalArgumentException e) {
+      log.warn("Invalid argtype:" + argType + " on options: " + options.getClass().getName() + "." + fieldName);
+      return;
+    }
+    try {
+      setter.invoke(options, arg);
+    } catch (Exception ex) {
+      throw new VertxException("Failed to invoke setter: " + setter, ex);
     }
   }
 

@@ -407,6 +407,124 @@ public class VertxApplicationTest {
   }
 
   @Test
+  public void testConfigureFromEnvVars() {
+    testConfigureFromEnvVars(false);
+  }
+
+  @Test
+  public void testConfigureFromEnvVarsClustered() {
+    testConfigureFromEnvVars(true);
+  }
+
+  private void testConfigureFromEnvVars(boolean clustered) {
+    String[] args;
+
+    if (clustered) {
+      args = new String[]{"java:" + TestVerticle.class.getCanonicalName(), "-cluster"};
+    } else {
+      args = new String[]{"java:" + TestVerticle.class.getCanonicalName()};
+    }
+
+    Map<String, String> env = new HashMap<>(System.getenv());
+    AtomicReference<VertxOptions> vertxOptions = new AtomicReference<>();
+
+    env.put("VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE", "42");
+    env.put("VERTX_OPTIONS_MAX_EVENT_LOOP_EXECUTE_TIME", "123767667");
+    env.put("VERTX_OPTIONS_MAX_EVENT_LOOP_EXECUTE_TIME_UNIT", "SECONDS");
+    env.put("VERTX_METRICS_OPTIONS_ENABLED", "true");
+
+    hooks = new TestHooks() {
+      @Override
+      public void beforeStartingVertx(HookContext context) {
+        vertxOptions.set(context.vertxOptions());
+      }
+
+      @Override
+      public Map<String, String> getEnvironmentVariables() {
+        return env;
+      }
+    };
+
+    ClassLoader oldCL = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(createMetricsFromMetaInfLoader("io.vertx.launcher.application.tests.CustomMetricsFactory"));
+
+    try {
+      TestVertxApplication app = new TestVertxApplication(args, hooks);
+      app.launch();
+    } finally {
+      Thread.currentThread().setContextClassLoader(oldCL);
+    }
+
+    await("Server not started")
+      .atMost(Duration.ofSeconds(10))
+      .until(() -> TestVerticle.instanceCount.get(), equalTo(1));
+
+    VertxOptions opts = vertxOptions.get();
+
+    assertEquals(42, opts.getEventLoopPoolSize(), 0);
+    assertEquals(123767667L, opts.getMaxEventLoopExecuteTime());
+    assertTrue(opts.getMetricsOptions().isEnabled());
+    assertEquals(TimeUnit.SECONDS, opts.getMaxEventLoopExecuteTimeUnit());
+  }
+
+  @Test
+  public void testSystemPropertiesOverrideEnvVars() {
+    Map<String, String> env = new HashMap<>(System.getenv());
+    AtomicReference<VertxOptions> vertxOptions = new AtomicReference<>();
+
+    env.put("VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE", "5");
+
+    hooks = new TestHooks() {
+      @Override
+      public void beforeStartingVertx(HookContext context) {
+        vertxOptions.set(context.vertxOptions());
+      }
+
+      @Override
+      public Map<String, String> getEnvironmentVariables() {
+        return env;
+      }
+    };
+
+    try {
+      System.setProperty("vertx.options.eventLoopPoolSize", "99");
+      TestVertxApplication app = new TestVertxApplication(new String[]{"java:" + TestVerticle.class.getCanonicalName()}, hooks);
+      app.launch();
+    } finally {
+      clearProperties();
+    }
+
+    await("Server not started")
+      .atMost(Duration.ofSeconds(10))
+      .until(() -> TestVerticle.instanceCount.get(), equalTo(1));
+
+    assertEquals(99, vertxOptions.get().getEventLoopPoolSize());
+  }
+
+  @Test
+  public void testCliArgumentsOverrideEnvVars() {
+    Map<String, String> env = new HashMap<>(System.getenv());
+    env.put("VERTX_DEPLOYMENT_OPTIONS_INSTANCES", "2");
+
+    hooks = new TestHooks() {
+      @Override
+      public Map<String, String> getEnvironmentVariables() {
+        return env;
+      }
+    };
+
+    TestVertxApplication app = new TestVertxApplication(
+      new String[]{"java:" + TestVerticle.class.getCanonicalName(), "-instances", "5"},
+      hooks
+    );
+    app.launch();
+
+    await("Server not started")
+      .atMost(Duration.ofSeconds(10))
+      .until(() -> TestVerticle.instanceCount.get(), equalTo(5));
+  }
+
+  @Test
   public void testCustomMetricsOptions() {
     AtomicReference<VertxOptions> vertxOptions = new AtomicReference<>();
     hooks = new TestHooks() {
