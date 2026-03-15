@@ -21,6 +21,7 @@ import io.vertx.core.spi.VertxMetricsFactory;
 import io.vertx.core.spi.VertxServiceProvider;
 import io.vertx.core.spi.VertxTracerFactory;
 import io.vertx.core.tracing.TracingOptions;
+import io.vertx.launcher.application.ConfigScope;
 import io.vertx.launcher.application.ExitCodes;
 import io.vertx.launcher.application.VertxApplication;
 import io.vertx.launcher.application.VertxApplicationHooks;
@@ -37,23 +38,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import static io.vertx.launcher.application.impl.Utils.*;
+import static io.vertx.launcher.application.impl.Utils.computeVerticleName;
+import static io.vertx.launcher.application.impl.Utils.readJsonFileOrString;
 import static java.lang.Boolean.TRUE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static picocli.CommandLine.Parameters.NULL_VALUE;
 
 @Command(name = "VertxApplication", description = "Runs a Vert.x application.", sortOptions = false)
 public class VertxApplicationCommand implements Runnable {
-
-  private static final String VERTX_OPTIONS_PROP_PREFIX = "vertx.options.";
-  private static final String VERTX_EVENTBUS_PROP_PREFIX = "vertx.eventBus.options.";
-  private static final String DEPLOYMENT_OPTIONS_PROP_PREFIX = "vertx.deployment.options.";
-  private static final String METRICS_OPTIONS_PROP_PREFIX = "vertx.metrics.options.";
-
-  static final String VERTX_OPTIONS_ENV_PREFIX = "VERTX_OPTIONS_";
-  static final String VERTX_EVENTBUS_OPTIONS_ENV_PREFIX = "VERTX_EVENTBUS_OPTIONS_";
-  static final String DEPLOYMENT_OPTIONS_ENV_PREFIX = "VERTX_DEPLOYMENT_OPTIONS_";
-  static final String METRICS_OPTIONS_ENV_PREFIX = "VERTX_METRICS_OPTIONS_";
 
   @Option(
     names = {"-options", "--options", "-vertx-options", "--vertx-options"},
@@ -184,6 +176,7 @@ public class VertxApplicationCommand implements Runnable {
   private final VertxApplication vertxApplication;
   private final VertxApplicationHooks hooks;
   private final Logger log;
+  private final CompositeConfigLoader configLoader = new CompositeConfigLoader();
   private final HookContextImpl hookContext = new HookContextImpl();
 
   private volatile VertxInternal vertx;
@@ -246,7 +239,7 @@ public class VertxApplicationCommand implements Runnable {
   private void processVertxOptions(VertxOptions vertxOptions, JsonObject optionsJson) {
     if (clustered == TRUE) {
       EventBusOptions eventBusOptions = vertxOptions.getEventBusOptions();
-      configureFromEnvVars(log, eventBusOptions, VERTX_EVENTBUS_OPTIONS_ENV_PREFIX);
+      configLoader.apply(eventBusOptions, ConfigScope.EVENTBUS);
       if (clusterHost != null) {
         eventBusOptions.setHost(clusterHost);
       }
@@ -259,10 +252,8 @@ public class VertxApplicationCommand implements Runnable {
       if (clusterPublicPort != null) {
         eventBusOptions.setClusterPublicPort(clusterPublicPort);
       }
-      configureFromSystemProperties(log, eventBusOptions, VERTX_EVENTBUS_PROP_PREFIX);
     }
-    configureFromEnvVars(log, vertxOptions, VERTX_OPTIONS_ENV_PREFIX);
-    configureFromSystemProperties(log, vertxOptions, VERTX_OPTIONS_PROP_PREFIX);
+    configLoader.apply(vertxOptions, ConfigScope.VERTX);
     VertxMetricsFactory metricsFactory = findServiceProvider(VertxMetricsFactory.class);
     if (metricsFactory != null) {
       MetricsOptions metricsOptions;
@@ -276,8 +267,7 @@ public class VertxApplicationCommand implements Runnable {
           metricsOptions = metricsFactory.newOptions(metricsOptions);
         }
       }
-      configureFromEnvVars(log, metricsOptions, METRICS_OPTIONS_ENV_PREFIX);
-      configureFromSystemProperties(log, metricsOptions, METRICS_OPTIONS_PROP_PREFIX);
+      configLoader.apply(metricsOptions, ConfigScope.METRICS);
       vertxOptions.setMetricsOptions(metricsOptions);
     }
     VertxTracerFactory tracerFactory = findServiceProvider(VertxTracerFactory.class);
@@ -308,7 +298,7 @@ public class VertxApplicationCommand implements Runnable {
 
   private DeploymentOptions createDeploymentOptions(JsonObject deploymentOptionsParam, JsonObject confParam) {
     DeploymentOptions deploymentOptions = deploymentOptionsParam != null ? new DeploymentOptions(deploymentOptionsParam) : new DeploymentOptions();
-    configureFromEnvVars(log, deploymentOptions, DEPLOYMENT_OPTIONS_ENV_PREFIX);
+    configLoader.apply(deploymentOptions, ConfigScope.DEPLOYMENT);
     if (worker == TRUE) {
       if (virtualThread == TRUE) {
         log.error("Cannot choose the threading model, the virtual thread and worker options are both set.");
@@ -326,7 +316,6 @@ public class VertxApplicationCommand implements Runnable {
     } else {
       deploymentOptions.setConfig(new JsonObject());
     }
-    configureFromSystemProperties(log, deploymentOptions, DEPLOYMENT_OPTIONS_PROP_PREFIX);
     return deploymentOptions;
   }
 

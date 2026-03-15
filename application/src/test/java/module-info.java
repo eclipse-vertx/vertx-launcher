@@ -20,4 +20,6 @@ open module io.vertx.launcher.application.tests {
   // Only required for compilation
   requires static io.vertx.core.tests;
   requires static awaitility;
+
+  provides io.vertx.launcher.application.ConfigLoader with io.vertx.launcher.application.tests.TestConfigLoader;
 }

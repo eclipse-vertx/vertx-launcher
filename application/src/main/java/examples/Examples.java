@@ -12,12 +12,34 @@
 package examples;
 
 import io.vertx.core.VertxOptions;
+import io.vertx.launcher.application.ConfigLoader;
+import io.vertx.launcher.application.ConfigScope;
 import io.vertx.launcher.application.HookContext;
 import io.vertx.launcher.application.VertxApplication;
 import io.vertx.launcher.application.VertxApplicationHooks;
 
 @SuppressWarnings("unused")
 public class Examples {
+
+  public void customConfigLoader() {
+    class AppConfigLoader implements ConfigLoader {
+
+      @Override
+      public int order() {
+        // Between environment variables (1000) and system properties (2000)
+        return 1500;
+      }
+
+      @Override
+      public void configure(Object target, ConfigScope scope) {
+        if (scope == ConfigScope.VERTX && target instanceof VertxOptions) {
+          VertxOptions options = (VertxOptions) target;
+          // Load from your custom source (e.g. AWS AppConfig, Firebase Remote Config, a file, etc.)
+          options.setEventLoopPoolSize(4);
+        }
+      }
+    }
+  }
 
   public void hooks(String[] args) {
     VertxApplicationHooks hooks = new VertxApplicationHooks() {
