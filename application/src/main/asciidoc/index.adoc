@@ -209,13 +209,45 @@ For example, `-Dvertx.options.eventLoopPoolSize=8` maps to `setEventLoopPoolSize
 Options are applied in this order, where later entries win:
 
 1. JSON options (via `-options` / `-deployment-options`)
-2. Environment variables
-3. CLI arguments (e.g. `--cluster-host`, `--instances`, `--worker`)
-4. System properties (via `-D`)
+2. {@link io.vertx.launcher.application.ConfigLoader} chain, sorted by {@link io.vertx.launcher.application.ConfigLoader#order()}:
+  - Environment variables (order 1000)
+  - Custom config loaders (any order)
+  - System properties (order 2000)
+3. CLI arguments (e.g. `--cluster-host`, `--instances`, `--worker`) — always win
 
-For example, if `VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE=5` is set but `-Dvertx.options.eventLoopPoolSize=10` is also passed, the event loop pool size will be `10`.
+For example, if `VERTX_OPTIONS_EVENT_LOOP_POOL_SIZE=5` is set but `-Dvertx.options.eventLoopPoolSize=10` is also passed, the event loop pool size will be `10` because system properties have a higher order than environment variables.
+
+CLI arguments always take precedence. For instance, `--instances 3` will override any value set by environment variables, system properties, or custom config loaders.
 
 == Extensibility
+
+=== Custom config loaders
+
+The launcher supports a {@link io.vertx.launcher.application.ConfigLoader} SPI for plugging in custom configuration sources (e.g. AWS AppConfig, Firebase Remote Config, a configuration file, etc.).
+
+Implementations are discovered via `java.util.ServiceLoader` and applied in {@link io.vertx.launcher.application.ConfigLoader#order()} sequence.
+A lower order means the loader runs first (and has lower precedence); a higher order means it runs later (and wins over lower-order loaders).
+
+The {@link io.vertx.launcher.application.ConfigScope} parameter tells the loader which options type is being configured, allowing scope-specific logic.
+
+[source,$lang]
+.Custom config loader implementation
+----
+{@link examples.Examples#customConfigLoader}
+----
+
+To register the implementation, add a `META-INF/services/io.vertx.launcher.application.ConfigLoader` file to your classpath:
+
+----
+com.example.AppConfigLoader
+----
+
+Or, if using the Java module system, add to your `module-info.java`:
+
+[source,java]
+----
+provides io.vertx.launcher.application.ConfigLoader with com.example.AppConfigLoader;
+----
 
 === Hooks
 

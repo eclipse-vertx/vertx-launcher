@@ -18,7 +18,12 @@ module io.vertx.launcher.application {
   requires static io.vertx.docgen;
 
   uses io.vertx.core.spi.VertxServiceProvider;
+  uses io.vertx.launcher.application.ConfigLoader;
   opens io.vertx.launcher.application.impl to info.picocli;
 
   exports io.vertx.launcher.application;
+
+  provides io.vertx.launcher.application.ConfigLoader with
+    io.vertx.launcher.application.impl.EnvironmentVariableConfigLoader,
+    io.vertx.launcher.application.impl.SystemPropertyConfigLoader;
 }

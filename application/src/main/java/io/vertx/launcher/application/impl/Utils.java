@@ -11,7 +11,6 @@
 
 package io.vertx.launcher.application.impl;
 
-import io.vertx.core.VertxException;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.json.DecodeException;
@@ -19,7 +18,6 @@ import io.vertx.core.json.JsonObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -46,81 +44,6 @@ public class Utils {
     } catch (DecodeException ignored) {
     }
     log.warn("The " + optionName + " option does not point to an valid JSON file or is not a valid JSON object.");
-    return null;
-  }
-
-  public static void configureFromSystemProperties(Logger log, Object options, String prefix) {
-    Properties props = System.getProperties();
-    Enumeration<?> e = props.propertyNames();
-    while (e.hasMoreElements()) {
-      String propName = (String) e.nextElement();
-      if (propName.startsWith(prefix)) {
-        String fieldName = propName.substring(prefix.length());
-        configureOption(log, options, fieldName, props.getProperty(propName));
-      }
-    }
-  }
-
-  public static void configureFromEnvVars(Logger log, Object options, String prefix) {
-    for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-      String envName = entry.getKey();
-      if (envName.startsWith(prefix)) {
-        String fieldName = envName.substring(prefix.length()).replace("_", "").toLowerCase();
-        configureOption(log, options, fieldName, entry.getValue());
-      }
-    }
-  }
-
-  private static void configureOption(Logger log, Object options, String fieldName, String value) {
-    Method setter = getSetter(fieldName, options.getClass());
-    if (setter == null) {
-      log.warn("No such property to configure on options: " + options.getClass().getName() + "." + fieldName);
-      return;
-    }
-    Class<?> argType = setter.getParameterTypes()[0];
-    Object arg;
-    try {
-      if (argType.equals(String.class)) {
-        arg = value;
-      } else if (argType.equals(int.class)) {
-        arg = Integer.valueOf(value);
-      } else if (argType.equals(long.class)) {
-        arg = Long.valueOf(value);
-      } else if (argType.equals(boolean.class)) {
-        arg = Boolean.valueOf(value);
-      } else if (argType.isEnum()) {
-        arg = Enum.valueOf((Class<? extends Enum>) argType, value);
-      } else {
-        log.warn("Invalid type for setter: " + argType);
-        return;
-      }
-    } catch (IllegalArgumentException e) {
-      log.warn("Invalid argtype:" + argType + " on options: " + options.getClass().getName() + "." + fieldName);
-      return;
-    }
-    try {
-      setter.invoke(options, arg);
-    } catch (Exception ex) {
-      throw new VertxException("Failed to invoke setter: " + setter, ex);
-    }
-  }
-
-  private static Method getSetter(String fieldName, Class<?> clazz) {
-    Method[] meths = clazz.getDeclaredMethods();
-    for (Method meth : meths) {
-      if (("set" + fieldName).equalsIgnoreCase(meth.getName())) {
-        return meth;
-      }
-    }
-
-    // This set contains the overridden methods
-    meths = clazz.getMethods();
-    for (Method meth : meths) {
-      if (("set" + fieldName).equalsIgnoreCase(meth.getName())) {
-        return meth;
-      }
-    }
-
     return null;
   }
 
