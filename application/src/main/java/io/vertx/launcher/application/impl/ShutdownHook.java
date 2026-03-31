@@ -26,10 +26,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class ShutdownHook implements Runnable {
 
   private final Vertx vertx;
+  private final Duration timeout;
   private final Consumer<AsyncResult<Void>> whenComplete;
 
-  public ShutdownHook(Vertx vertx, Consumer<AsyncResult<Void>> whenComplete) {
+  public ShutdownHook(Vertx vertx, Duration timeout, Consumer<AsyncResult<Void>> whenComplete) {
     this.vertx = vertx;
+    this.timeout = timeout;
     this.whenComplete = whenComplete;
   }
 
@@ -46,7 +48,7 @@ public class ShutdownHook implements Runnable {
 
   private AsyncResult<Void> closeVertx() throws ExecutionException, TimeoutException {
     CompletableFuture<Void> future = vertx.close().toCompletionStage().toCompletableFuture();
-    long remaining = Duration.ofMinutes(2).toMillis();
+    long remaining = timeout.toMillis();
     long stop = System.currentTimeMillis() + remaining;
     boolean interrupted = false;
     while (true) {

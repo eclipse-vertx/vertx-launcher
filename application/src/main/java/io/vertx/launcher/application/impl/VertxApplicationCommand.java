@@ -55,6 +55,12 @@ public class VertxApplicationCommand implements Runnable {
   static final String DEPLOYMENT_OPTIONS_ENV_PREFIX = "VERTX_DEPLOYMENT_OPTIONS_";
   static final String METRICS_OPTIONS_ENV_PREFIX = "VERTX_METRICS_OPTIONS_";
 
+  static final String VERTX_STARTUP_TIMEOUT_SECONDS_ENV = "VERTX_STARTUP_TIMEOUT_SECONDS";
+  static final String VERTX_DEPLOYMENT_TIMEOUT_SECONDS_ENV = "VERTX_DEPLOYMENT_TIMEOUT_SECONDS";
+  static final String VERTX_SHUTDOWN_TIMEOUT_SECONDS_ENV = "VERTX_SHUTDOWN_TIMEOUT_SECONDS";
+
+  private static final long DEFAULT_TIMEOUT_SECONDS = 120;
+
   @Option(
     names = {"-options", "--options", "-vertx-options", "--vertx-options"},
     description = {
@@ -162,6 +168,42 @@ public class VertxApplicationCommand implements Runnable {
   private String configStr;
 
   @Option(
+    names = {"--startup-timeout-seconds"},
+    description = {
+      "Timeout in seconds for Vert.x startup.",
+      "Can also be set via the " + VERTX_STARTUP_TIMEOUT_SECONDS_ENV + " environment variable.",
+      "Default: 120."
+    },
+    defaultValue = Option.NULL_VALUE
+  )
+  @SuppressWarnings("unused")
+  private Long startupTimeoutSeconds;
+
+  @Option(
+    names = {"--deployment-timeout-seconds"},
+    description = {
+      "Timeout in seconds for main verticle deployment.",
+      "Can also be set via the " + VERTX_DEPLOYMENT_TIMEOUT_SECONDS_ENV + " environment variable.",
+      "Default: 120."
+    },
+    defaultValue = Option.NULL_VALUE
+  )
+  @SuppressWarnings("unused")
+  private Long deploymentTimeoutSeconds;
+
+  @Option(
+    names = {"--shutdown-timeout-seconds"},
+    description = {
+      "Timeout in seconds for Vert.x shutdown.",
+      "Can also be set via the " + VERTX_SHUTDOWN_TIMEOUT_SECONDS_ENV + " environment variable.",
+      "Default: 120."
+    },
+    defaultValue = Option.NULL_VALUE
+  )
+  @SuppressWarnings("unused")
+  private Long shutdownTimeoutSeconds;
+
+  @Option(
     names = {"-h", "-help", "--help"},
     usageHelp = true,
     description = {
@@ -209,14 +251,18 @@ public class VertxApplicationCommand implements Runnable {
     VertxBuilder builder = hooks.createVertxBuilder(options);
     processVertxOptions(options, optionsParam);
 
+    Duration startupTimeout = Duration.ofSeconds(resolveTimeout(VERTX_STARTUP_TIMEOUT_SECONDS_ENV, startupTimeoutSeconds));
+    Duration deploymentTimeout = Duration.ofSeconds(resolveTimeout(VERTX_DEPLOYMENT_TIMEOUT_SECONDS_ENV, deploymentTimeoutSeconds));
+    Duration shutdownTimeout = Duration.ofSeconds(resolveTimeout(VERTX_SHUTDOWN_TIMEOUT_SECONDS_ENV, shutdownTimeoutSeconds));
+
     hookContext.setVertxOptions(options);
     hooks.beforeStartingVertx(hookContext);
-    vertx = (VertxInternal) withTCCLAwait(() -> createVertx(builder), Duration.ofMinutes(2), "startup", VertxApplicationHooks::afterFailureToStartVertx, ExitCodes.VERTX_INITIALIZATION);
+    vertx = (VertxInternal) withTCCLAwait(() -> createVertx(builder), startupTimeout, "startup", VertxApplicationHooks::afterFailureToStartVertx, ExitCodes.VERTX_INITIALIZATION);
     hookContext.setVertx(vertx);
     hooks.afterVertxStarted(hookContext);
 
     vertx.addCloseHook(this::beforeStoppingVertx);
-    Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(vertx, this::afterShutdownHookExecuted)));
+    Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(vertx, shutdownTimeout, this::afterShutdownHookExecuted)));
 
     DeploymentOptions deploymentOptions = createDeploymentOptions(deploymentOptionsParam, conf);
 
@@ -237,7 +283,7 @@ public class VertxApplicationCommand implements Runnable {
 
     hooks.beforeDeployingVerticle(hookContext);
     String message = hookContext.deploymentOptions().getThreadingModel() == ThreadingModel.WORKER ? "deploying worker verticle" : "deploying verticle";
-    String deploymentId = withTCCLAwait(deployer, Duration.ofMinutes(2), message, VertxApplicationHooks::afterFailureToDeployVerticle, ExitCodes.VERTX_DEPLOYMENT);
+    String deploymentId = withTCCLAwait(deployer, deploymentTimeout, message, VertxApplicationHooks::afterFailureToDeployVerticle, ExitCodes.VERTX_DEPLOYMENT);
     log.info("Succeeded in " + message);
     hookContext.setDeploymentId(deploymentId);
     hooks.afterVerticleDeployed(hookContext);
@@ -344,6 +390,21 @@ public class VertxApplicationCommand implements Runnable {
       log.error("Failed to create the Vert.x instance", e);
       return Future.failedFuture(e);
     }
+  }
+
+  private long resolveTimeout(String envVar, Long cliValue) {
+    if (cliValue != null) {
+      return cliValue;
+    }
+    String envValue = System.getenv(envVar);
+    if (envValue != null) {
+      try {
+        return Long.parseLong(envValue);
+      } catch (NumberFormatException e) {
+        log.warn("Invalid value for environment variable " + envVar + ": \"" + envValue + "\". Using default: " + DEFAULT_TIMEOUT_SECONDS + "s.");
+      }
+    }
+    return DEFAULT_TIMEOUT_SECONDS;
   }
 
   private <T> T withTCCLAwait(Supplier<Future<T>> supplier, Duration duration, String logMessage, FailureHook failureHook, int exitCode) {
