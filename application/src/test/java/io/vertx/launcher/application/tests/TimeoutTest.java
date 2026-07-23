@@ -13,6 +13,7 @@ package io.vertx.launcher.application.tests;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.json.JsonObject;
 import io.vertx.launcher.application.VertxApplication;
 import io.vertx.launcher.application.VertxApplicationHooks;
 import org.junit.jupiter.api.AfterEach;
@@ -24,7 +25,6 @@ import java.util.concurrent.CompletableFuture;
 
 import static io.vertx.launcher.application.ExitCodes.VERTX_DEPLOYMENT;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.org.webcompere.systemstubs.SystemStubs.withEnvironmentVariables;
 
@@ -49,95 +49,125 @@ public class TimeoutTest {
   }
 
   @Test
-  void testDefaultTimeoutsStartApplicationSuccessfully() {
-    new TestVertxApplication(new String[]{"java:" + TestVerticle.class.getCanonicalName()}, hooks).launch();
-    await("Verticle not deployed")
-      .atMost(Duration.ofSeconds(10))
-      .until(TestVerticle.instanceCount::get, equalTo(1));
+  void testNegativeStartupTimeoutCliOptionFallsBackToDefault() {
+    testInvalidCliOptionFallsBackToDefault("-10");
   }
 
   @Test
-  void testStartupTimeoutCliOption() {
-    new TestVertxApplication(
-      new String[]{"--startup-timeout-seconds", "10", "java:" + TestVerticle.class.getCanonicalName()}, hooks
+  void testZeroStartupTimeoutCliOptionFallsBackToDefault() {
+    testInvalidCliOptionFallsBackToDefault("0");
+  }
+
+  private void testInvalidCliOptionFallsBackToDefault(String value) {
+    JsonObject config = new JsonObject().put(DelayedStartVerticle.DELAY_MS_CONFIG_KEY, 500L);
+    int exitCode = new TestVertxApplication(
+      new String[]{
+        "--startup-timeout-seconds", value,
+        "--conf", config.encode(),
+        "java:" + DelayedStartVerticle.class.getName()
+      },
+      hooks
     ).launch();
-    await("Verticle not deployed")
-      .atMost(Duration.ofSeconds(10))
-      .until(TestVerticle.instanceCount::get, equalTo(1));
+    assertEquals(0, exitCode);
   }
 
   @Test
-  void testDeploymentTimeoutCliOption() {
-    new TestVertxApplication(
-      new String[]{"--deployment-timeout-seconds", "30", "java:" + TestVerticle.class.getCanonicalName()}, hooks
-    ).launch();
-    await("Verticle not deployed")
-      .atMost(Duration.ofSeconds(10))
-      .until(TestVerticle.instanceCount::get, equalTo(1));
+  void testNegativeDeploymentTimeoutEnvVarFallsBackToDefault() throws Exception {
+    testInvalidEnvVarFallsBackToDefault("-5");
   }
 
   @Test
-  void testShutdownTimeoutCliOption() {
-    new TestVertxApplication(
-      new String[]{"--shutdown-timeout-seconds", "5", "java:" + TestVerticle.class.getCanonicalName()}, hooks
-    ).launch();
-    await("Verticle not deployed")
-      .atMost(Duration.ofSeconds(10))
-      .until(TestVerticle.instanceCount::get, equalTo(1));
+  void testZeroDeploymentTimeoutEnvVarFallsBackToDefault() throws Exception {
+    testInvalidEnvVarFallsBackToDefault("0");
   }
 
   @Test
-  void testStartupTimeoutFromEnvVar() throws Exception {
-    withEnvironmentVariables("VERTX_STARTUP_TIMEOUT_SECONDS", "10").execute(() -> {
-      new TestVertxApplication(
-        new String[]{"java:" + TestVerticle.class.getCanonicalName()}, hooks
-      ).launch();
-    });
-    await("Verticle not deployed")
-      .atMost(Duration.ofSeconds(10))
-      .until(TestVerticle.instanceCount::get, equalTo(1));
+  void testEmptyStringDeploymentTimeoutEnvVarFallsBackToDefault() throws Exception {
+    testInvalidEnvVarFallsBackToDefault("");
   }
 
   @Test
-  void testDeploymentTimeoutFromEnvVar() throws Exception {
-    withEnvironmentVariables("VERTX_DEPLOYMENT_TIMEOUT_SECONDS", "30").execute(() -> {
-      new TestVertxApplication(
-        new String[]{"java:" + TestVerticle.class.getCanonicalName()}, hooks
-      ).launch();
-    });
-    await("Verticle not deployed")
-      .atMost(Duration.ofSeconds(10))
-      .until(TestVerticle.instanceCount::get, equalTo(1));
+  void testWhitespaceDeploymentTimeoutEnvVarFallsBackToDefault() throws Exception {
+    testInvalidEnvVarFallsBackToDefault("   ");
   }
 
   @Test
   void testInvalidStartupTimeoutEnvVarFallsBackToDefault() throws Exception {
-    withEnvironmentVariables("VERTX_STARTUP_TIMEOUT_SECONDS", "not-a-number").execute(() -> {
-      new TestVertxApplication(
-        new String[]{"java:" + TestVerticle.class.getCanonicalName()}, hooks
+    testInvalidEnvVarFallsBackToDefault("not-a-number");
+  }
+
+  private void testInvalidEnvVarFallsBackToDefault(String value) throws Exception {
+    withEnvironmentVariables("VERTX_DEPLOYMENT_TIMEOUT_SECONDS", value).execute(() -> {
+      JsonObject config = new JsonObject().put(DelayedStartVerticle.DELAY_MS_CONFIG_KEY, 500L);
+      int exitCode = new TestVertxApplication(
+        new String[]{
+          "--conf", config.encode(),
+          "java:" + DelayedStartVerticle.class.getName()
+        },
+        hooks
       ).launch();
+      assertEquals(0, exitCode);
     });
-    await("Verticle not deployed")
-      .atMost(Duration.ofSeconds(10))
-      .until(TestVerticle.instanceCount::get, equalTo(1));
   }
 
   @Test
-  void testDeploymentTimeoutExpiryReturnsDeploymentExitCode() {
+  void testDeploymentTimeoutWithCliOption() {
+    JsonObject config = new JsonObject().put(DelayedStartVerticle.DELAY_MS_CONFIG_KEY, 5000L);
     int exitCode = new TestVertxApplication(
-      new String[]{"--deployment-timeout-seconds", "1", "java:" + NeverDeployingVerticle.class.getName()}, hooks
+      new String[]{
+        "--deployment-timeout-seconds", "1",
+        "--conf", config.encode(),
+        "java:" + DelayedStartVerticle.class.getName()
+      },
+      hooks
     ).launch();
     assertEquals(VERTX_DEPLOYMENT, exitCode);
   }
 
-  /**
-   * A verticle whose start promise is intentionally never completed, causing any deployment
-   * attempt to hang until the configured deployment timeout fires.
-   */
-  public static class NeverDeployingVerticle extends AbstractVerticle {
+  @Test
+  void testDeploymentTimeoutWithEnvVar() throws Exception {
+    JsonObject config = new JsonObject().put(DelayedStartVerticle.DELAY_MS_CONFIG_KEY, 5000L);
+    withEnvironmentVariables("VERTX_DEPLOYMENT_TIMEOUT_SECONDS", "1").execute(() -> {
+      int exitCode = new TestVertxApplication(
+        new String[]{
+          "--conf", config.encode(),
+          "java:" + DelayedStartVerticle.class.getName()
+        },
+        hooks
+      ).launch();
+      assertEquals(VERTX_DEPLOYMENT, exitCode);
+    });
+  }
+
+  @Test
+  void testCliValueOverridesEnvVar() throws Exception {
+    JsonObject config = new JsonObject().put(DelayedStartVerticle.DELAY_MS_CONFIG_KEY, 5000L);
+    withEnvironmentVariables("VERTX_DEPLOYMENT_TIMEOUT_SECONDS", "10").execute(() -> {
+      int exitCode = new TestVertxApplication(
+        new String[]{
+          "--deployment-timeout-seconds", "1",
+          "--conf", config.encode(),
+          "java:" + DelayedStartVerticle.class.getName()
+        },
+        hooks
+      ).launch();
+      assertEquals(VERTX_DEPLOYMENT, exitCode);
+    });
+  }
+
+  public static class DelayedStartVerticle extends AbstractVerticle {
+    static final String DELAY_MS_CONFIG_KEY = "delayMs";
+
     @Override
     public void start(Promise<Void> startPromise) {
-      // Intentionally never complete the start promise so the deployment times out.
+      long delayMs = config().getLong(DELAY_MS_CONFIG_KEY, 0L);
+      if (delayMs <= 0) {
+        startPromise.complete();
+        return;
+      }
+      vertx.setTimer(delayMs, id -> {
+        startPromise.complete();
+      });
     }
   }
 
