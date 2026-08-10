@@ -12,6 +12,7 @@
 package io.vertx.core.impl.launcher.commands;
 
 import io.vertx.core.*;
+import io.vertx.core.internal.Closeable;
 import io.vertx.core.cli.CLIException;
 import io.vertx.core.cli.CommandLine;
 import io.vertx.core.cli.annotations.*;
@@ -21,6 +22,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.spi.launcher.ExecutionContext;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -250,7 +252,7 @@ public class RunCommand extends BareCommand implements Closeable {
       }
 
       if (vertx instanceof VertxInternal) {
-        ((VertxInternal) vertx).addCloseHook(this);
+        ((VertxInternal) vertx).registerResource(this);
       }
 
       deploymentOptions = new DeploymentOptions();
@@ -451,12 +453,12 @@ public class RunCommand extends BareCommand implements Closeable {
   }
 
   @Override
-  public void close(Completable<Void> completion) {
+  public Future<Void> shutdown(Duration timeout) {
     try {
       beforeStoppingVertx(vertx);
-      completion.succeed();
+      return Future.succeededFuture();
     } catch (Exception e) {
-      completion.fail(e);
+      return Future.failedFuture(e);
     }
   }
 }

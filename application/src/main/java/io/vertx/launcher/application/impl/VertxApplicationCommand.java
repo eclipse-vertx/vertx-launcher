@@ -264,7 +264,7 @@ public class VertxApplicationCommand implements Runnable {
     hookContext.setVertx(vertx);
     hooks.afterVertxStarted(hookContext);
 
-    vertx.addCloseHook(this::beforeStoppingVertx);
+    vertx.registerResource(this::beforeStoppingVertx);
     Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownHook(vertx, shutdownTimeout, this::afterShutdownHookExecuted)));
 
     DeploymentOptions deploymentOptions = createDeploymentOptions(deploymentOptionsParam, conf);
@@ -448,12 +448,12 @@ public class VertxApplicationCommand implements Runnable {
     }
   }
 
-  private void beforeStoppingVertx(Completable<Void> promise) {
+  private Future<Void> beforeStoppingVertx(Duration timeout) {
     try {
       hooks.beforeStoppingVertx(hookContext);
-      promise.succeed();
+      return Future.succeededFuture();
     } catch (Exception e) {
-      promise.fail(e);
+      return Future.failedFuture(e);
     }
   }
 
